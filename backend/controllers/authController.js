@@ -1,8 +1,12 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "prime_platter_jwt_secret_key_2026_production";
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+
+if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET is not configured");
+}
 
 // Helper to generate JWT token
 const generateToken = (user) => {

@@ -1,7 +1,11 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
-const JWT_SECRET = process.env.JWT_SECRET || "prime_platter_jwt_secret_key_2026_production";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET is missing from environment variables");
+}
 
 /**
  * Protect routes: Requires valid JWT token in Authorization header

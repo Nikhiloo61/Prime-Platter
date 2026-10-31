@@ -189,17 +189,19 @@ const getOrderById = async (req, res, next) => {
       });
     }
 
-    // Permission check: if order has a userId, only the owner or an admin can view it
-    if (order.userId && req.user) {
-      const isOwner = order.userId.toString() === req.user._id.toString();
-      const isAdmin = req.user.role === "admin";
-      if (!isOwner && !isAdmin) {
+// Only the order owner or an admin can view the order
+    const isOwner =
+        order.userId &&
+        order.userId.toString() === req.user._id.toString();
+
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
         return res.status(403).json({
-          success: false,
-          message: "You are not authorized to view this order"
+            success: false,
+            message: "You are not authorized to view this order"
         });
-      }
-    }
+}
 
     res.status(200).json({
       success: true,
@@ -249,16 +251,18 @@ const cancelOrder = async (req, res, next) => {
       });
     }
 
-    // Authorize cancellation
-    if (order.userId && req.user) {
-      const isOwner = order.userId.toString() === req.user._id.toString();
-      const isAdmin = req.user.role === "admin";
-      if (!isOwner && !isAdmin) {
+  // Only the order owner or an admin can cancel the order
+    const isOwner =
+        order.userId &&
+        order.userId.toString() === req.user._id.toString();
+
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
         return res.status(403).json({
-          success: false,
-          message: "Not authorized to cancel this order"
+            success: false,
+            message: "Not authorized to cancel this order"
         });
-      }
     }
 
     // Check cancellation eligibility
