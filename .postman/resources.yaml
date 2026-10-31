@@ -1,0 +1,13 @@
+# Use this workspace to collaborate
+workspace:
+  id: 96a80eab-41c9-4657-8063-1709136cfa1f
+
+localResources:
+  collections:
+    - ../backend/Prime Platter Food Delivery API
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
+cloudResources:
+  collections:
+    ../postman/collections/Prime Platter Food Delivery API: 88e03b5b-bea7-4379-b8df-05142f174edb

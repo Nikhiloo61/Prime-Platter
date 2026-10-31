@@ -1,0 +1,5 @@
+$kind: http-request
+description: Fetches all restaurants sorted by rating.
+url: "{{baseUrl}}/restaurants"
+method: GET
+order: 1000

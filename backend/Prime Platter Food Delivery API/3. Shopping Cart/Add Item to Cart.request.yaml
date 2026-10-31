@@ -1,0 +1,14 @@
+$kind: http-request
+description: Add a dish to cart. If already present, quantity increments.
+url: "{{baseUrl}}/cart"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "menuItemId": "{{sampleMenuItemId}}",
+      "quantity": 1
+    }
+order: 2000

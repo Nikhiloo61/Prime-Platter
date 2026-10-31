@@ -1,0 +1,5 @@
+$kind: http-request
+description: Fetches single restaurant details using its MongoDB ObjectId.
+url: "{{baseUrl}}/restaurants/{{sampleRestaurantId}}"
+method: GET
+order: 2000

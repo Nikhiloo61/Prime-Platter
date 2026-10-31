@@ -1,0 +1,7 @@
+$kind: http-request
+description: Server-side filter for vegetarian food items.
+url: "{{baseUrl}}/menu?type=Veg"
+method: GET
+queryParams:
+  type: Veg
+order: 2000

@@ -1,0 +1,20 @@
+$kind: http-request
+description: Add a new dish linked to an existing restaurant.
+url: "{{baseUrl}}/menu"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Chicken Tikka Roll",
+      "price": 180,
+      "type": "Non-Veg",
+      "cuisine": "Indian",
+      "category": "Starters",
+      "restaurantId": "{{sampleRestaurantId}}",
+      "image": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=600&q=80",
+      "description": "Tender chicken tikka chunks wrapped in fresh flaky paratha with mint chutney."
+    }
+order: 8000

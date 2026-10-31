@@ -1,0 +1,5 @@
+$kind: http-request
+description: Delete a restaurant and its linked dishes.
+url: "{{baseUrl}}/restaurants/{{sampleRestaurantId}}"
+method: DELETE
+order: 5000

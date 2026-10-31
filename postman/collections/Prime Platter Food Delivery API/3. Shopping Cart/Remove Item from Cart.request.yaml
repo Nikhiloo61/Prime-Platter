@@ -1,0 +1,5 @@
+$kind: http-request
+description: Delete a specific item from the shopping cart.
+url: "{{baseUrl}}/cart/{{sampleMenuItemId}}"
+method: DELETE
+order: 4000

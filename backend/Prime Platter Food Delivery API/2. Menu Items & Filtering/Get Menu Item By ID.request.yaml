@@ -1,0 +1,5 @@
+$kind: http-request
+description: Fetches a specific food item with populated restaurant details.
+url: "{{baseUrl}}/menu/{{sampleMenuItemId}}"
+method: GET
+order: 7000

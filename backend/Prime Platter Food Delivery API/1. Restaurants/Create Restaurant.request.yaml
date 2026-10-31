@@ -1,0 +1,19 @@
+$kind: http-request
+description: Create a new restaurant in MongoDB.
+url: "{{baseUrl}}/restaurants"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Tokyo Sushi & Ramen",
+      "cuisine": "Japanese",
+      "image": "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80",
+      "rating": 4.7,
+      "deliveryTime": "20-25 mins",
+      "minOrder": 200,
+      "description": "Fresh artisan sushi rolls, warm ramen bowls, and Japanese street snacks."
+    }
+order: 3000

@@ -1,0 +1,5 @@
+$kind: http-request
+description: Get all current items and dynamically calculated total in the cart.
+url: "{{baseUrl}}/cart"
+method: GET
+order: 1000

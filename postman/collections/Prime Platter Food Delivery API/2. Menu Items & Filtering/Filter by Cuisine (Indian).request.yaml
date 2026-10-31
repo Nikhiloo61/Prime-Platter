@@ -1,0 +1,7 @@
+$kind: http-request
+description: Server-side filter by cuisine type.
+url: "{{baseUrl}}/menu?cuisine=Indian"
+method: GET
+queryParams:
+  cuisine: Indian
+order: 3000

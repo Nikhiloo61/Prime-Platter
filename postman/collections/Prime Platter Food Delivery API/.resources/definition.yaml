@@ -1,0 +1,6 @@
+$kind: collection
+description: Pre-configured Postman Collection for Prime Platter REST APIs including Restaurants, Menu Items, Dynamic Filtering, and Shopping Cart operations.
+variables:
+  baseUrl: http://localhost:5001/api
+  sampleRestaurantId: 6aa6d464bd08011b74f15572
+  sampleMenuItemId: 6aa6d464bd08011b74f15585

@@ -1,0 +1,7 @@
+$kind: http-request
+description: Case-insensitive search matching name, cuisine, and category.
+url: "{{baseUrl}}/menu?search=chicken"
+method: GET
+queryParams:
+  search: chicken
+order: 5000

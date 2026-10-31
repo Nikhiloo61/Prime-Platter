@@ -1,0 +1,5 @@
+$kind: http-request
+description: Empty the shopping cart completely.
+url: "{{baseUrl}}/cart"
+method: DELETE
+order: 5000

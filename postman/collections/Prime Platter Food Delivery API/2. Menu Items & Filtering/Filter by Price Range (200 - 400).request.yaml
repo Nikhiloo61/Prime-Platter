@@ -1,0 +1,8 @@
+$kind: http-request
+description: Filter dishes between ₹200 and ₹400.
+url: "{{baseUrl}}/menu?minPrice=200&maxPrice=400"
+method: GET
+queryParams:
+  minPrice: "200"
+  maxPrice: "400"
+order: 4000

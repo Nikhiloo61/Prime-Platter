@@ -1,0 +1,10 @@
+$kind: http-request
+description: Combining multiple dynamic query filters simultaneously.
+url: "{{baseUrl}}/menu?type=Veg&cuisine=Indian&minPrice=100&maxPrice=300"
+method: GET
+queryParams:
+  type: Veg
+  cuisine: Indian
+  minPrice: "100"
+  maxPrice: "300"
+order: 6000

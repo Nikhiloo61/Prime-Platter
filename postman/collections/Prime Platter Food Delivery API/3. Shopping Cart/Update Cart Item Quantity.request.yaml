@@ -1,0 +1,13 @@
+$kind: http-request
+description: Update quantity of an item in the cart.
+url: "{{baseUrl}}/cart/{{sampleMenuItemId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "quantity": 3
+    }
+order: 3000

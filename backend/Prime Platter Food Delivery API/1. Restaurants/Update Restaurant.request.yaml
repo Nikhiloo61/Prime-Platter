@@ -1,0 +1,14 @@
+$kind: http-request
+description: Update specific fields of an existing restaurant.
+url: "{{baseUrl}}/restaurants/{{sampleRestaurantId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "rating": 4.9,
+      "deliveryTime": "15-20 mins"
+    }
+order: 4000
