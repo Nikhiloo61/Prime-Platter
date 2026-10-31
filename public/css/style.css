@@ -365,3 +365,198 @@ body {
   color: white;
   transform: translateY(-3px);
 }
+
+/* ==========================================
+   AUTHENTICATION, CHECKOUT & DASHBOARD EXTENSIONS
+   ========================================== */
+
+/* Auth & Form Cards */
+.auth-wrapper {
+  min-height: calc(100vh - 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+
+.auth-card {
+  background: var(--card-bg-light);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  border: none;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #a4b0be;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  z-index: 5;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary-color);
+}
+
+/* Order Tracking Stepper */
+.tracking-stepper {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  margin: 2.5rem 0;
+}
+
+.stepper-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+  z-index: 2;
+}
+
+.stepper-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f1f2f6;
+  color: #a4b0be;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  transition: all var(--transition-speed);
+  border: 3px solid #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.stepper-step.active .stepper-icon {
+  background: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 71, 87, 0.2);
+}
+
+.stepper-step.completed .stepper-icon {
+  background: var(--secondary-color);
+  color: #ffffff;
+}
+
+.stepper-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #747d8c;
+}
+
+.stepper-step.active .stepper-label {
+  color: var(--primary-color);
+}
+
+.stepper-step.completed .stepper-label {
+  color: var(--text-dark);
+}
+
+.stepper-line {
+  position: absolute;
+  top: 25px;
+  left: 10%;
+  right: 10%;
+  height: 4px;
+  background: #e4e7eb;
+  z-index: 1;
+}
+
+.stepper-line-fill {
+  height: 100%;
+  background: var(--secondary-color);
+  transition: width 0.4s ease;
+}
+
+/* Status Badges */
+.badge-status-placed {
+  background-color: #70a1ff;
+  color: #ffffff;
+}
+
+.badge-status-confirmed {
+  background-color: #1e90ff;
+  color: #ffffff;
+}
+
+.badge-status-preparing {
+  background-color: #ffa502;
+  color: #ffffff;
+}
+
+.badge-status-out {
+  background-color: #9c88ff;
+  color: #ffffff;
+}
+
+.badge-status-delivered {
+  background-color: #2ed573;
+  color: #ffffff;
+}
+
+.badge-status-cancelled {
+  background-color: #ff4757;
+  color: #ffffff;
+}
+
+/* Admin Dashboard Elements */
+.admin-sidebar-nav .nav-link {
+  color: var(--text-dark) !important;
+  border-radius: var(--border-radius-md);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.admin-sidebar-nav .nav-link.active {
+  background-color: var(--primary-color);
+  color: #ffffff !important;
+}
+
+.admin-sidebar-nav .nav-link.active::after {
+  display: none;
+}
+
+.stats-card {
+  border-radius: var(--border-radius-lg);
+  border: none;
+  background: var(--card-bg-light);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  transition: transform var(--transition-speed);
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.stats-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+

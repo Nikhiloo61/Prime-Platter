@@ -1,27 +1,84 @@
 const Cart = require("../models/Cart");
 const MenuItem = require("../models/MenuItem");
 
-// Helper to get or create the single active cart
-const getActiveCart = async () => {
-  let cart = await Cart.findOne();
-  if (!cart) {
-    cart = await Cart.create({ items: [], totalAmount: 0 });
+// Helper to resolve or create the active cart based on user or session
+const getActiveCartForRequest = async (req) => {
+  let query = null;
+  const guestId = req.headers["x-cart-id"] || req.query.guestId;
+
+  if (req.user && req.user._id) {
+    query = { userId: req.user._id };
+  } else if (guestId) {
+    query = { guestId };
+  } else {
+    // Fallback for anonymous legacy/test requests
+    query = { userId: null, guestId: null };
   }
+
+  let cart = await Cart.findOne(query);
+
+  // If authenticated user doesn't have a user-cart yet, but has a guest cart, migrate it
+  if (!cart && req.user && req.user._id && guestId) {
+    cart = await Cart.findOne({ guestId });
+    if (cart) {
+      cart.userId = req.user._id;
+      cart.guestId = null;
+      await cart.save();
+    }
+  }
+
+  // If still not found, create a new cart
+  if (!cart) {
+    cart = await Cart.create({
+      userId: req.user ? req.user._id : null,
+      guestId: req.user ? null : guestId || null,
+      items: [],
+      subtotal: 0,
+      deliveryFee: 0,
+      tax: 0,
+      totalAmount: 0
+    });
+  }
+
   return cart;
 };
 
 // @desc    Get current cart
 // @route   GET /api/cart
-// @access  Public
+// @access  Public (supports optional token / session header)
 const getCart = async (req, res, next) => {
   try {
-    const cart = await getActiveCart();
+    const cart = await getActiveCartForRequest(req);
+
+    // Sync cart with database MenuItem data (prices, active availability)
+    if (cart.items.length > 0) {
+      const itemIds = cart.items.map((i) => i.menuItemId);
+      const liveMenuItems = await MenuItem.find({ _id: { $in: itemIds } });
+      const menuMap = new Map(liveMenuItems.map((m) => [m._id.toString(), m]));
+
+      // Filter out deleted or unavailable items
+      const validItems = [];
+      for (const item of cart.items) {
+        const liveItem = menuMap.get(item.menuItemId.toString());
+        if (liveItem && liveItem.available) {
+          item.price = liveItem.price;
+          item.name = liveItem.name;
+          item.image = liveItem.image;
+          validItems.push(item);
+        }
+      }
+      cart.items = validItems;
+    }
+
     cart.calculateTotal();
     await cart.save();
 
     res.status(200).json({
       success: true,
       items: cart.items,
+      subtotal: cart.subtotal || 0,
+      deliveryFee: cart.deliveryFee || 0,
+      tax: cart.tax || 0,
       totalAmount: cart.totalAmount
     });
   } catch (error) {
@@ -31,7 +88,7 @@ const getCart = async (req, res, next) => {
 
 // @desc    Add item to cart
 // @route   POST /api/cart
-// @access  Public
+// @access  Public (supports optional token / session header)
 const addToCart = async (req, res, next) => {
   try {
     const { menuItemId, quantity = 1 } = req.body;
@@ -59,17 +116,22 @@ const addToCart = async (req, res, next) => {
       });
     }
 
-    const cart = await getActiveCart();
+    if (!menuItem.available) {
+      return res.status(400).json({
+        success: false,
+        message: `${menuItem.name} is currently out of stock`
+      });
+    }
+
+    const cart = await getActiveCartForRequest(req);
 
     const existingIndex = cart.items.findIndex(
-      item => item.menuItemId.toString() === menuItemId.toString()
+      (item) => item.menuItemId.toString() === menuItemId.toString()
     );
 
     if (existingIndex > -1) {
-      // Increase quantity if item already exists
       cart.items[existingIndex].quantity += qty;
     } else {
-      // Add new item with details from MenuItem
       cart.items.push({
         menuItemId: menuItem._id,
         name: menuItem.name,
@@ -87,6 +149,9 @@ const addToCart = async (req, res, next) => {
       success: true,
       message: `${menuItem.name} added to cart`,
       items: cart.items,
+      subtotal: cart.subtotal || 0,
+      deliveryFee: cart.deliveryFee || 0,
+      tax: cart.tax || 0,
       totalAmount: cart.totalAmount
     });
   } catch (error) {
@@ -110,10 +175,10 @@ const updateCartItem = async (req, res, next) => {
     }
 
     const qty = parseInt(quantity, 10);
-    const cart = await getActiveCart();
+    const cart = await getActiveCartForRequest(req);
 
     const itemIndex = cart.items.findIndex(
-      item => item.menuItemId.toString() === menuItemId.toString()
+      (item) => item.menuItemId.toString() === menuItemId.toString()
     );
 
     if (itemIndex === -1) {
@@ -124,7 +189,6 @@ const updateCartItem = async (req, res, next) => {
     }
 
     if (qty <= 0) {
-      // If quantity is 0 or negative, remove from cart
       cart.items.splice(itemIndex, 1);
     } else {
       cart.items[itemIndex].quantity = qty;
@@ -136,6 +200,9 @@ const updateCartItem = async (req, res, next) => {
     res.status(200).json({
       success: true,
       items: cart.items,
+      subtotal: cart.subtotal || 0,
+      deliveryFee: cart.deliveryFee || 0,
+      tax: cart.tax || 0,
       totalAmount: cart.totalAmount
     });
   } catch (error) {
@@ -149,11 +216,11 @@ const updateCartItem = async (req, res, next) => {
 const removeFromCart = async (req, res, next) => {
   try {
     const { menuItemId } = req.params;
-    const cart = await getActiveCart();
+    const cart = await getActiveCartForRequest(req);
 
     const initialLength = cart.items.length;
     cart.items = cart.items.filter(
-      item => item.menuItemId.toString() !== menuItemId.toString()
+      (item) => item.menuItemId.toString() !== menuItemId.toString()
     );
 
     if (cart.items.length === initialLength) {
@@ -170,6 +237,9 @@ const removeFromCart = async (req, res, next) => {
       success: true,
       message: "Item removed from cart",
       items: cart.items,
+      subtotal: cart.subtotal || 0,
+      deliveryFee: cart.deliveryFee || 0,
+      tax: cart.tax || 0,
       totalAmount: cart.totalAmount
     });
   } catch (error) {
@@ -182,8 +252,11 @@ const removeFromCart = async (req, res, next) => {
 // @access  Public
 const clearCart = async (req, res, next) => {
   try {
-    const cart = await getActiveCart();
+    const cart = await getActiveCartForRequest(req);
     cart.items = [];
+    cart.subtotal = 0;
+    cart.deliveryFee = 0;
+    cart.tax = 0;
     cart.totalAmount = 0;
     await cart.save();
 
@@ -191,6 +264,9 @@ const clearCart = async (req, res, next) => {
       success: true,
       message: "Cart cleared successfully",
       items: [],
+      subtotal: 0,
+      deliveryFee: 0,
+      tax: 0,
       totalAmount: 0
     });
   } catch (error) {
@@ -199,6 +275,7 @@ const clearCart = async (req, res, next) => {
 };
 
 module.exports = {
+  getActiveCartForRequest,
   getCart,
   addToCart,
   updateCartItem,

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Prime Platter</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top py-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        Prime Platter
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#restaurants">Restaurants</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#menu">Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#offers">Offers</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <a href="index.html" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Back to Menu
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Auth Card Section -->
+  <main class="auth-wrapper">
+    <div class="auth-card p-4 p-md-5">
+      <div class="text-center mb-4">
+        <div class="d-inline-flex p-3 rounded-circle bg-danger bg-opacity-10 text-danger mb-3">
+          <i class="bi bi-person-fill-lock fs-2"></i>
+        </div>
+        <h3 class="fw-bold mb-1">Welcome Back</h3>
+        <p class="text-muted">Sign in to your Prime Platter account</p>
+      </div>
+
+      <div id="alert-box" class="alert alert-danger d-none" role="alert"></div>
+
+      <form id="login-form" novalidate>
+        <div class="mb-3">
+          <label for="login-email" class="form-label fw-semibold">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text bg-transparent text-muted"><i class="bi bi-envelope"></i></span>
+            <input type="email" class="form-control" id="login-email" placeholder="name@example.com" required autocomplete="email">
+          </div>
+          <div class="invalid-feedback">Please enter a valid email address.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="login-password" class="form-label fw-semibold">Password</label>
+          <div class="password-wrapper">
+            <input type="password" class="form-control pe-5" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="password-toggle-btn" id="toggle-password" aria-label="Toggle password visibility">
+              <i class="bi bi-eye" id="toggle-password-icon"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback">Please enter your password.</div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="remember-me" checked>
+            <label class="form-check-label text-muted small" for="remember-me">Remember me</label>
+          </div>
+          <span class="text-muted small">Secure JWT Auth</span>
+        </div>
+
+        <button type="submit" class="btn btn-danger w-100 rounded-pill py-2 fw-semibold" id="submit-btn">
+          Sign In
+        </button>
+      </form>
+
+      <div class="text-center mt-4 pt-3 border-top">
+        <p class="text-muted small mb-0">
+          Don't have an account? <a href="register.html" class="text-danger fw-semibold text-decoration-none">Create an Account</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 start-0 p-3" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Password toggle
+    const toggleBtn = document.getElementById("toggle-password");
+    const passwordInput = document.getElementById("login-password");
+    const toggleIcon = document.getElementById("toggle-password-icon");
+
+    toggleBtn.addEventListener("click", () => {
+      const isPassword = passwordInput.getAttribute("type") === "password";
+      passwordInput.setAttribute("type", isPassword ? "text" : "password");
+      toggleIcon.className = isPassword ? "bi bi-eye-slash" : "bi bi-eye";
+    });
+
+    // Form submit
+    const form = document.getElementById("login-form");
+    const alertBox = document.getElementById("alert-box");
+    const submitBtn = document.getElementById("submit-btn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      alertBox.classList.add("d-none");
+
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        return;
+      }
+
+      const email = document.getElementById("login-email").value.trim();
+      const password = passwordInput.value;
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Signing in...';
+
+        const res = await api.login({ email, password });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get("redirect") || (res.user?.role === "admin" ? "admin.html" : "index.html");
+        window.location.href = redirectUrl;
+      } catch (err) {
+        alertBox.textContent = err.message || "Failed to sign in. Please verify your credentials.";
+        alertBox.classList.remove("d-none");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Sign In";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,12 +1,20 @@
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const path = require("path");
 const Restaurant = require("./models/Restaurant");
 const MenuItem = require("./models/MenuItem");
 const Cart = require("./models/Cart");
+const User = require("./models/User");
 
-dotenv.config();
+dotenv.config({
+  path: path.join(__dirname, ".env")
+});
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/food_delivery_db";
+const MONGO_URI = process.env.MONGO_URI;
+
+if (!MONGO_URI) {
+  throw new Error("MONGO_URI is missing from backend/.env");
+}
 
 const seedRestaurants = [
   {
@@ -311,6 +319,28 @@ const seedDatabase = async () => {
     // Initialize clean cart
     await Cart.create({ items: [], totalAmount: 0 });
     console.log("Initialized empty shopping cart.");
+
+    // Seed default admin user if not present
+    const existingAdmin = await User.findOne({ email: "admin@primeplatter.com" });
+    if (!existingAdmin) {
+      await User.create({
+        name: "Prime Platter Admin",
+        email: "admin@primeplatter.com",
+        phone: "+91 98765 00000",
+        password: "Admin@123",
+        role: "admin",
+        addresses: [
+          {
+            street: "Connaught Place Head Office",
+            city: "New Delhi",
+            state: "Delhi",
+            pincode: "110001",
+            isDefault: true
+          }
+        ]
+      });
+      console.log("Seeded default admin user: admin@primeplatter.com / Admin@123");
+    }
 
     console.log("Database seeded successfully!");
     process.exit(0);
