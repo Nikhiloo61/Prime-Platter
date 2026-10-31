@@ -43,20 +43,18 @@ app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/cart", cartRoutes);
 
-// Local development frontend
-if (!process.env.VERCEL) {
-    app.use(express.static(path.join(__dirname, "public")));
+// Serve frontend in both local and production environments
+app.use(express.static(path.join(__dirname, "public")));
 
-    app.get("*", (req, res, next) => {
-        if (req.path.startsWith("/api")) {
-            return next();
-        }
+app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+        return next();
+    }
 
-        res.sendFile(
-            path.join(__dirname, "public", "index.html")
-        );
-    });
-}
+    res.sendFile(
+        path.join(__dirname, "public", "index.html")
+    );
+});
 
 // Error handling
 app.use(notFound);
