@@ -7,6 +7,10 @@ const {
   removeFromCart,
   clearCart
 } = require("../controllers/cartController");
+const { optionalAuth } = require("../middleware/authMiddleware");
+
+// Apply optionalAuth to all cart routes so authenticated users have their cart tied to their account
+router.use(optionalAuth);
 
 router
   .route("/")

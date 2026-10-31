@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Details - Prime Platter</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top py-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        Prime Platter
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#restaurants">Restaurants</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#menu">Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="my-orders.html">My Orders</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <a href="my-orders.html" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Back to Orders
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Details Content -->
+  <main class="container my-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <!-- Order Header Card -->
+        <div class="custom-card p-4 mb-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 border-bottom mb-3">
+            <div>
+              <span class="text-muted small">Invoice / Order Details</span>
+              <h3 class="fw-bold mb-0 text-dark" id="det-order-id">Loading...</h3>
+              <small class="text-muted" id="det-date">-</small>
+            </div>
+            <div class="mt-2 mt-sm-0 text-sm-end">
+              <span class="badge bg-danger rounded-pill px-3 py-2 fs-6 mb-1" id="det-status-badge">Order Placed</span>
+              <div class="small text-muted" id="det-payment-summary">Payment: COD (Pending)</div>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <a href="#" id="det-track-link" class="btn btn-danger btn-sm rounded-pill px-3">
+              <i class="bi bi-geo-alt me-1"></i> Track Order Live
+            </a>
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3" id="det-reorder-btn">
+              <i class="bi bi-arrow-repeat me-1"></i> Reorder
+            </button>
+            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 d-none" id="det-cancel-btn" onclick="cancelCurrentOrder()">
+              <i class="bi bi-x-circle me-1"></i> Cancel Order
+            </button>
+          </div>
+        </div>
+
+        <!-- Food Items Table Card -->
+        <div class="custom-card p-4 mb-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-bag-check text-danger me-2"></i>Ordered Food Items</h5>
+
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">Item</th>
+                  <th scope="col" class="text-center">Price</th>
+                  <th scope="col" class="text-center">Quantity</th>
+                  <th scope="col" class="text-end">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody id="det-items-tbody">
+                <!-- Loaded via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="row justify-content-end mt-3">
+            <div class="col-md-5">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Item Subtotal:</span>
+                <span class="fw-semibold">₹<span id="det-pricing-subtotal">0</span></span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Delivery Charges:</span>
+                <span class="fw-semibold" id="det-pricing-delivery">₹0</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted">Restaurant Tax (5% GST):</span>
+                <span class="fw-semibold">₹<span id="det-pricing-tax">0</span></span>
+              </div>
+              <hr class="my-2">
+              <div class="d-flex justify-content-between">
+                <h5 class="fw-bold mb-0">Total Amount:</h5>
+                <h4 class="fw-bold text-danger mb-0">₹<span id="det-pricing-total">0</span></h4>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meta Information Cards -->
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="custom-card p-4 h-100">
+              <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt text-danger me-2"></i>Delivery Address</h5>
+              <p class="fw-bold mb-1" id="det-cust-name">-</p>
+              <p class="text-muted mb-2" id="det-address">-</p>
+              <p class="text-muted small mb-0"><i class="bi bi-telephone text-danger me-1"></i><span id="det-cust-phone">-</span></p>
+
+              <div id="det-instructions-wrapper" class="mt-3 p-3 bg-light rounded-3 d-none">
+                <strong class="small text-muted d-block">Special Cooking Instructions:</strong>
+                <span class="small" id="det-instructions"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="custom-card p-4 h-100">
+              <h5 class="fw-bold mb-3"><i class="bi bi-credit-card text-danger me-2"></i>Payment Details</h5>
+              <div class="mb-2">
+                <span class="text-muted small d-block">Payment Method</span>
+                <span class="fw-semibold" id="det-pay-method">COD</span>
+              </div>
+              <div class="mb-2">
+                <span class="text-muted small d-block">Payment Status</span>
+                <span class="badge bg-success" id="det-pay-status">Paid</span>
+              </div>
+              <div class="mb-0" id="det-txn-wrapper">
+                <span class="text-muted small d-block">Transaction / Reference ID</span>
+                <code id="det-txn-id" class="small">-</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/navbar.js"></script>
+  <script>
+    let currentOrder = null;
+
+    async function loadOrderDetails() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get("id");
+
+      if (!orderId) {
+        window.location.href = "my-orders.html";
+        return;
+      }
+
+      try {
+        const res = await api.getOrderById(orderId);
+        currentOrder = res.order;
+        renderDetails(currentOrder);
+      } catch (err) {
+        alert("Failed to load order details: " + err.message);
+      }
+    }
+
+    function renderDetails(order) {
+      document.getElementById("det-order-id").textContent = order.orderId;
+      document.getElementById("det-date").textContent = new Date(order.createdAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+
+      document.getElementById("det-status-badge").textContent = order.orderStatus;
+      document.getElementById("det-payment-summary").textContent = `Payment: ${order.paymentInfo.method} (${order.paymentInfo.status})`;
+
+      // Links
+      document.getElementById("det-track-link").href = `order-tracking.html?id=${order.orderId}`;
+      document.getElementById("det-reorder-btn").onclick = async () => {
+        try {
+          await api.reorder(order.orderId);
+          window.location.href = "checkout.html";
+        } catch (e) {
+          alert("Failed to reorder: " + e.message);
+        }
+      };
+
+      // Cancel button eligibility
+      const cancelBtn = document.getElementById("det-cancel-btn");
+      if (["Order Placed", "Confirmed"].includes(order.orderStatus)) {
+        cancelBtn.classList.remove("d-none");
+      }
+
+      // Customer & Address
+      document.getElementById("det-cust-name").textContent = order.customer.name;
+      document.getElementById("det-cust-phone").textContent = order.customer.phone;
+      document.getElementById("det-address").textContent =
+        `${order.deliveryAddress.street}, ${order.deliveryAddress.city}, ${order.deliveryAddress.state} - ${order.deliveryAddress.pincode}`;
+
+      if (order.specialInstructions) {
+        document.getElementById("det-instructions-wrapper").classList.remove("d-none");
+        document.getElementById("det-instructions").textContent = order.specialInstructions;
+      }
+
+      // Payment Details
+      document.getElementById("det-pay-method").textContent = order.paymentInfo.method;
+      const statusBadge = document.getElementById("det-pay-status");
+      statusBadge.textContent = order.paymentInfo.status;
+      statusBadge.className = order.paymentInfo.status === "Paid" ? "badge bg-success" : "badge bg-warning text-dark";
+      document.getElementById("det-txn-id").textContent = order.paymentInfo.transactionId || order.orderId;
+
+      // Pricing
+      document.getElementById("det-pricing-subtotal").textContent = order.pricing.subtotal;
+      document.getElementById("det-pricing-delivery").innerHTML =
+        order.pricing.deliveryFee === 0 ? '<span class="badge bg-success">FREE</span>' : `₹${order.pricing.deliveryFee}`;
+      document.getElementById("det-pricing-tax").textContent = order.pricing.tax;
+      document.getElementById("det-pricing-total").textContent = order.pricing.total;
+
+      // Items Table
+      const tbody = document.getElementById("det-items-tbody");
+      tbody.innerHTML = "";
+      order.items.forEach((item) => {
+        const row = `
+          <tr>
+            <td>
+              <div class="d-flex align-items-center">
+                <img src="${item.image || 'https://via.placeholder.com/50'}" class="rounded-3 me-3" style="width: 48px; height: 48px; object-fit: cover;" alt="${item.name}">
+                <div>
+                  <h6 class="mb-0 fw-semibold">${item.name}</h6>
+                </div>
+              </div>
+            </td>
+            <td class="text-center">₹${item.price}</td>
+            <td class="text-center">${item.quantity}</td>
+            <td class="text-end fw-bold">₹${item.price * item.quantity}</td>
+          </tr>`;
+        tbody.insertAdjacentHTML("beforeend", row);
+      });
+    }
+
+    async function cancelCurrentOrder() {
+      if (!currentOrder) return;
+      const reason = prompt("Reason for cancellation:", "Customer cancellation");
+      if (!reason) return;
+
+      try {
+        await api.cancelOrder(currentOrder.orderId, reason);
+        alert("Order cancelled successfully");
+        loadOrderDetails();
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadOrderDetails);
+  </script>
+</body>
+</html>

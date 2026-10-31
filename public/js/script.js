@@ -458,6 +458,53 @@ async function emptyCart() {
   }
 }
 
+// Proceed to checkout page
+function proceedToCheckout() {
+  const badge = document.querySelector(".cart-badge");
+  const count = parseInt(badge?.innerText || "0", 10);
+  if (count <= 0) {
+    showToast("Your cart is empty! Add food items to proceed.", "warning");
+    return;
+  }
+  window.location.href = "checkout.html";
+}
+
+// Modal login handler
+const modalLoginForm = document.getElementById("modal-login-form");
+if (modalLoginForm) {
+  modalLoginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const alertEl = document.getElementById("modal-login-alert");
+    const submitBtn = document.getElementById("modal-login-submit");
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-pass").value;
+
+    if (alertEl) alertEl.classList.add("d-none");
+
+    try {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing In...';
+      }
+      await api.login({ email, password });
+      showToast("Signed in successfully!", "success");
+      const modalEl = document.getElementById("loginModal");
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) modalInstance.hide();
+      window.location.reload();
+    } catch (err) {
+      if (alertEl) {
+        alertEl.textContent = err.message || "Invalid credentials";
+        alertEl.classList.remove("d-none");
+      }
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Sign In";
+      }
+    }
+  });
+}
+
 // Render cart UI directly from backend-calculated Cart data
 function renderCartFromBackend(cartData) {
   const items = cartData?.items || [];
