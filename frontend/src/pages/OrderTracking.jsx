@@ -25,22 +25,29 @@ export const OrderTracking = () => {
   const [cancelling, setCancelling] = useState(false);
   const { success, error } = useToast();
 
-  const fetchOrder = async () => {
+  const fetchOrder = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const { data } = await api.get(`/orders/${id}`);
       if (data.success && data.order) {
-        setOrder(data.order);
+        setOrder((prev) => {
+          if (prev && prev.orderStatus !== data.order.orderStatus) {
+            success(`Order status updated to: ${data.order.orderStatus}`);
+          }
+          return data.order;
+        });
       }
     } catch (err) {
-      error(err.message || 'Could not load order tracking details');
+      if (showLoading) {
+        error(err.message || 'Could not load order tracking details');
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrder();
+    fetchOrder(true);
 
     // Socket.io Real-time setup
     const socket = getSocket();
@@ -57,11 +64,27 @@ export const OrderTracking = () => {
       }
     };
 
-    socket.on('order:status_updated', handleStatusUpdate);
+    if (socket) {
+      socket.on('order:status_updated', handleStatusUpdate);
+    }
+
+    // Smart polling fallback (essential for serverless platforms like Vercel where WebSockets disconnect)
+    const interval = setInterval(() => {
+      setOrder((current) => {
+        const isTerminal = current && ['Delivered', 'Cancelled'].includes(current.orderStatus);
+        if (!isTerminal) {
+          fetchOrder(false);
+        }
+        return current;
+      });
+    }, 5000);
 
     return () => {
       leaveOrderRoom(id);
-      socket.off('order:status_updated', handleStatusUpdate);
+      if (socket) {
+        socket.off('order:status_updated', handleStatusUpdate);
+      }
+      clearInterval(interval);
     };
   }, [id]);
 

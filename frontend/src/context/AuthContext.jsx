@@ -36,6 +36,15 @@ export const AuthProvider = ({ children }) => {
     fetchMe();
   }, [fetchMe]);
 
+  // Listen for global auth session expiration from api interceptor
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      logout();
+    };
+    window.addEventListener('prime_platter_auth_expired', handleAuthExpired);
+    return () => window.removeEventListener('prime_platter_auth_expired', handleAuthExpired);
+  }, []);
+
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     if (data.success && data.token) {

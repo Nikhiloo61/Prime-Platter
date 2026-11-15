@@ -284,41 +284,59 @@ const seedDatabase = async () => {
     await mongoose.connect(MONGO_URI);
     console.log("Connected to MongoDB successfully.");
 
-    // Drop collections to remove any legacy indexes from previous experiments
-    console.log("Dropping old collections and legacy indexes...");
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    for (const col of collections) {
-      if (["restaurants", "menuitems", "carts"].includes(col.name)) {
-        await mongoose.connection.db.dropCollection(col.name);
+    const isForceReset = process.argv.includes("--force") || process.argv.includes("--reset");
+
+    if (isForceReset) {
+      console.log("⚠️ --force flag supplied: Dropping restaurants, menuitems, and carts collections...");
+      const collections = await mongoose.connection.db.listCollections().toArray();
+      for (const col of collections) {
+        if (["restaurants", "menuitems", "carts"].includes(col.name)) {
+          await mongoose.connection.db.dropCollection(col.name);
+        }
       }
+    } else {
+      console.log("🛡️ Safe seed mode active: Preserving existing production data and collections.");
     }
 
-    // Insert Restaurants
-    console.log("Inserting restaurants...");
     const restaurantIdMap = {};
-    for (const restData of seedRestaurants) {
-      const { tempId, ...restFields } = restData;
-      const createdRest = await Restaurant.create(restFields);
-      restaurantIdMap[tempId] = createdRest._id;
+    const existingRestCount = await Restaurant.countDocuments();
+
+    if (existingRestCount === 0 || isForceReset) {
+      // Insert Restaurants
+      console.log("Inserting default restaurants...");
+      for (const restData of seedRestaurants) {
+        const { tempId, ...restFields } = restData;
+        const createdRest = await Restaurant.create(restFields);
+        restaurantIdMap[tempId] = createdRest._id;
+      }
+      console.log(`Inserted ${Object.keys(restaurantIdMap).length} restaurants.`);
+
+      // Insert Menu Items with linked restaurantId
+      console.log("Inserting menu items with valid restaurant references...");
+      const menuItemsToInsert = seedFoods.map(food => {
+        const { restaurantTempId, ...foodFields } = food;
+        return {
+          ...foodFields,
+          restaurantId: restaurantIdMap[restaurantTempId]
+        };
+      });
+
+      const createdMenuItems = await MenuItem.insertMany(menuItemsToInsert);
+      console.log(`Inserted ${createdMenuItems.length} menu items.`);
+    } else {
+      console.log(`Found ${existingRestCount} existing restaurants. Skipping destructive re-insertion.`);
+      const allRests = await Restaurant.find();
+      allRests.forEach((r, idx) => {
+        restaurantIdMap[idx + 1] = r._id;
+      });
     }
-    console.log(`Inserted ${Object.keys(restaurantIdMap).length} restaurants.`);
 
-    // Insert Menu Items with linked restaurantId
-    console.log("Inserting menu items with valid restaurant references...");
-    const menuItemsToInsert = seedFoods.map(food => {
-      const { restaurantTempId, ...foodFields } = food;
-      return {
-        ...foodFields,
-        restaurantId: restaurantIdMap[restaurantTempId]
-      };
-    });
-
-    const createdMenuItems = await MenuItem.insertMany(menuItemsToInsert);
-    console.log(`Inserted ${createdMenuItems.length} menu items.`);
-
-    // Initialize clean cart
-    await Cart.create({ items: [], totalAmount: 0 });
-    console.log("Initialized empty shopping cart.");
+    // Ensure at least one default cart exists
+    const cartCount = await Cart.countDocuments();
+    if (cartCount === 0) {
+      await Cart.create({ items: [], totalAmount: 0 });
+      console.log("Initialized empty shopping cart.");
+    }
 
     // Seed default admin user if not present
     let adminUser = await User.findOne({ email: "admin@primeplatter.com" });

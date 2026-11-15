@@ -162,27 +162,105 @@ Test Results: **29 passed, 29 total (100% pass rate in ~1.4 seconds)**.
 
 ---
 
-## 7. Deployment Instructions
+## 7. Production Deployment Guide (Two-Project Vercel Architecture)
 
-### Frontend Deployment (Vercel)
-1. Build the production React assets:
-   ```bash
-   npm run build:frontend
-   ```
-2. The bundled assets will be generated in `frontend/dist`.
-3. Set the Root Directory to `frontend` or point output directory to `frontend/dist`.
-4. Configure environment variable `VITE_API_URL` to point to your deployed backend.
+Prime Platter is engineered to deploy seamlessly on **Vercel** as two dedicated projects connected to the same GitHub repository:
 
-### Backend Deployment (Render / Railway)
-1. Set the Start Command to:
-   ```bash
-   node backend/server.js
-   ```
-2. Configure environment variables in the Render dashboard:
-   - `NODE_ENV=production`
-   - `MONGO_URI=<Your MongoDB Atlas Connection String>`
-   - `JWT_SECRET=<Random 32-character Secret>`
-   - `CLIENT_URL=<Your Vercel Frontend Domain>`
-   - `RAZORPAY_KEY_ID=<Your Razorpay Test Key>`
-   - `RAZORPAY_KEY_SECRET=<Your Razorpay Secret>`
-3. Ensure health check path is set to `/api/health`.
+```mermaid
+flowchart LR
+    Browser["User Browser\n(Web / Mobile)"]
+
+    subgraph Vercel ["Vercel Cloud Platform"]
+        subgraph FE ["Project 1: prime-platter (Frontend)"]
+            SPA["React 18 SPA\n(Vite + Tailwind)\nRoot: frontend/\nOutput: dist/"]
+        end
+
+        subgraph BE ["Project 2: prime-platter-api (Backend)"]
+            API_FN["Serverless Function\n(Express 4 + Mongoose)\nRoot: backend/\nEntry: api/index.js"]
+        end
+    end
+
+    MongoDB[(MongoDB Atlas\nCloud Cluster)]
+    Rzp["Razorpay\nGateway"]
+
+    Browser -->|Visits Web App| SPA
+    SPA -->|VITE_API_URL REST API| API_FN
+    SPA -.->|Smart Polling / Sockets| API_FN
+    API_FN -->|Connection Pool Cache| MongoDB
+    API_FN -->|Order & Verification| Rzp
+```
+
+---
+
+### Project 1: Frontend Deployment (`prime-platter`)
+
+1. In the Vercel Dashboard, click **Add New Project** and import the `Nikhiloo61/Prime-Platter` repository.
+2. In the Project Configuration:
+   - **Project Name:** `prime-platter` (or your chosen domain)
+   - **Framework Preset:** `Vite`
+   - **Root Directory:** Edit and set to `frontend` (crucial: ensure checkbox for "Include source files outside Root Directory" is unchecked)
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+   - **Install Command:** `npm install`
+3. In **Environment Variables**, add:
+   | Variable | Value | Description |
+   |---|---|---|
+   | `VITE_API_URL` | `https://prime-platter-api.vercel.app` | Base URL of your deployed backend Vercel project |
+   | `VITE_SOCKET_URL` | `https://prime-platter-api.vercel.app` | Socket server URL (or omitted to auto-derive from `VITE_API_URL`) |
+   | `VITE_RAZORPAY_KEY_ID` | `rzp_test_...` | Public Razorpay key ID for checkout modal |
+4. Click **Deploy**. Vercel will build and host the Single Page Application.
+5. All SPA deep links and page refreshes are handled by [`frontend/vercel.json`](frontend/vercel.json).
+
+---
+
+### Project 2: Backend API Deployment (`prime-platter-api`)
+
+1. In the Vercel Dashboard, click **Add New Project** and import the same `Nikhiloo61/Prime-Platter` repository.
+2. In the Project Configuration:
+   - **Project Name:** `prime-platter-api`
+   - **Framework Preset:** `Other`
+   - **Root Directory:** Edit and set to `backend`
+   - **Build Command:** Leave blank / default
+   - **Output Directory:** Leave blank / default
+   - **Install Command:** `npm install`
+3. In **Environment Variables**, add:
+   | Variable | Value | Description |
+   |---|---|---|
+   | `NODE_ENV` | `production` | Production mode |
+   | `MONGO_URI` | `mongodb+srv://...` | MongoDB Atlas cluster connection URI |
+   | `JWT_SECRET` | `your_secure_32_character_secret` | Secret key for JWT signing |
+   | `JWT_EXPIRES_IN` | `7d` | Token lifetime |
+   | `CLIENT_URL` | `https://prime-platter.vercel.app` | Production frontend URL for CORS whitelist |
+   | `RAZORPAY_KEY_ID` | `rzp_test_...` | Razorpay Key ID |
+   | `RAZORPAY_KEY_SECRET` | `your_secret` | Razorpay Key Secret |
+   | `RAZORPAY_WEBHOOK_SECRET`| `your_webhook_secret` | Optional: Razorpay webhook secret |
+   | `GEMINI_API_KEY` | `AIzaSy...` | Optional: Gemini API Key for AI dish assistant |
+4. Click **Deploy**.
+5. Vercel will deploy [`backend/vercel.json`](backend/vercel.json), routing all incoming HTTP traffic through [`backend/api/index.js`](backend/api/index.js).
+6. **Dual-Mount Routing:** The backend automatically routes both `/api/*` and `/*` (e.g. `/api/restaurants` and `/restaurants`), guaranteeing zero 404 route mismatches.
+7. Verify backend health by visiting: `https://prime-platter-api.vercel.app/api/health`.
+
+---
+
+### Alternative: Persistent Server Deployment (Render / Railway / VPS)
+
+For applications requiring continuous, 24/7 persistent WebSocket streaming:
+1. Deploy `backend` to **Render**, **Railway**, or **AWS EC2** using:
+   - **Build Command:** `npm install`
+   - **Start Command:** `node backend/server.js` (or `npm start`)
+2. Configure the same environment variables listed above.
+3. Health Check Path: `/api/health`.
+
+---
+
+## 8. Safe Database Seeder
+
+The database seeder is non-destructive by default, meaning running it in production preserves existing restaurant menus and user orders:
+
+```bash
+# Safe Upsert (preserves existing restaurants, users, and orders, seeds missing coupons)
+npm run seed
+
+# Explicit Reset (only if you want to wipe collections and re-seed defaults)
+node backend/seed.js --force
+```

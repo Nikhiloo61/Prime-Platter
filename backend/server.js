@@ -10,7 +10,7 @@ dotenv.config({
 });
 
 // Import Express application
-const app = require("../index");
+const app = require("./app");
 
 // Create HTTP server
 const server = http.createServer(app);
