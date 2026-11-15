@@ -321,9 +321,9 @@ const seedDatabase = async () => {
     console.log("Initialized empty shopping cart.");
 
     // Seed default admin user if not present
-    const existingAdmin = await User.findOne({ email: "admin@primeplatter.com" });
-    if (!existingAdmin) {
-      await User.create({
+    let adminUser = await User.findOne({ email: "admin@primeplatter.com" });
+    if (!adminUser) {
+      adminUser = await User.create({
         name: "Prime Platter Admin",
         email: "admin@primeplatter.com",
         phone: "+91 98765 00000",
@@ -341,6 +341,93 @@ const seedDatabase = async () => {
       });
       console.log("Seeded default admin user: admin@primeplatter.com / Admin@123");
     }
+
+    // Seed demo restaurant owner
+    let ownerUser = await User.findOne({ email: "spicyvilla@primeplatter.com" });
+    if (!ownerUser) {
+      ownerUser = await User.create({
+        name: "Chef Rajesh (Spicy Villa)",
+        email: "spicyvilla@primeplatter.com",
+        phone: "+91 98765 11111",
+        password: "Restaurant@123",
+        role: "restaurant_owner",
+        addresses: [
+          {
+            street: "Connaught Place Outlet",
+            city: "New Delhi",
+            state: "Delhi",
+            pincode: "110001",
+            isDefault: true
+          }
+        ]
+      });
+      console.log("Seeded demo restaurant owner: spicyvilla@primeplatter.com / Restaurant@123");
+    }
+
+    // Seed demo delivery rider
+    let riderUser = await User.findOne({ email: "rider@primeplatter.com" });
+    if (!riderUser) {
+      riderUser = await User.create({
+        name: "Ravi Kumar (Speed Rider)",
+        email: "rider@primeplatter.com",
+        phone: "+91 98765 22222",
+        password: "Rider@123",
+        role: "delivery_partner",
+        vehicleType: "Hero Splendor (DL 01 AB 1234)",
+        isAvailable: true,
+        addresses: [
+          {
+            street: "Karol Bagh Depot",
+            city: "New Delhi",
+            state: "Delhi",
+            pincode: "110005",
+            isDefault: true
+          }
+        ]
+      });
+      console.log("Seeded demo delivery rider: rider@primeplatter.com / Rider@123");
+    }
+
+    // Seed demo customer
+    let customerUser = await User.findOne({ email: "customer@primeplatter.com" });
+    if (!customerUser) {
+      customerUser = await User.create({
+        name: "Aman Gupta",
+        email: "customer@primeplatter.com",
+        phone: "+91 98765 33333",
+        password: "Customer@123",
+        role: "customer",
+        addresses: [
+          {
+            street: "Flat 204, Green Park Extension",
+            city: "New Delhi",
+            state: "Delhi",
+            pincode: "110016",
+            isDefault: true
+          }
+        ]
+      });
+      console.log("Seeded demo customer: customer@primeplatter.com / Customer@123");
+    }
+
+    // Link the first restaurant to the owner
+    const firstRestId = restaurantIdMap[1];
+    if (firstRestId && ownerUser) {
+      await Restaurant.findByIdAndUpdate(firstRestId, { ownerId: ownerUser._id });
+    }
+
+    // Seed promotional coupons
+    const Coupon = require("./models/Coupon");
+    const demoCoupons = [
+      { code: "WELCOME50", discountType: "percentage", discountValue: 50, maxDiscount: 100, minOrderAmount: 199 },
+      { code: "TASTY20", discountType: "percentage", discountValue: 20, maxDiscount: 75, minOrderAmount: 199 },
+      { code: "FREEDEL", discountType: "flat", discountValue: 40, maxDiscount: 40, minOrderAmount: 0 },
+      { code: "PRIME50", discountType: "flat", discountValue: 50, maxDiscount: 50, minOrderAmount: 249 }
+    ];
+    for (const cp of demoCoupons) {
+      await Coupon.findOneAndUpdate({ code: cp.code }, cp, { upsert: true, new: true });
+    }
+    console.log("Seeded promotional coupons: WELCOME50, TASTY20, FREEDEL, PRIME50");
 
     console.log("Database seeded successfully!");
     process.exit(0);

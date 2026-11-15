@@ -1,11 +1,14 @@
 {
   "name": "prime-platter",
-  "version": "1.0.0",
-  "description": "Prime Platter Food Delivery Website",
+  "version": "2.0.0",
+  "description": "Prime Platter - Modern Full-Stack Food Delivery Platform",
   "main": "index.js",
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "test": "cd backend && npm test",
     "seed": "node backend/seed.js"
   },
   "dependencies": {
@@ -13,8 +16,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.4.1"
+    "mongoose": "^8.4.1",
+    "socket.io": "^4.8.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.3"

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - Prime Platter</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Razorpay Checkout Script (Official CDN) -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top py-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        Prime Platter
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#restaurants">Restaurants</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#menu">Menu</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <a href="index.html" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-cart3 me-1"></i> Edit Cart
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Checkout Container -->
+  <main class="container my-5">
+    <div class="mb-4">
+      <h2 class="fw-bold mb-1">Finalize Your Order</h2>
+      <p class="text-muted">Enter your delivery address and choose a payment method</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Checkout Form Column -->
+      <div class="col-lg-7">
+        <form id="checkout-form" novalidate>
+          <!-- Customer Information -->
+          <div class="custom-card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-person text-danger me-2"></i>1. Contact Information</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="cust-name" class="form-label fw-semibold">Full Name</label>
+                <input type="text" class="form-control" id="cust-name" required placeholder="John Doe">
+                <div class="invalid-feedback">Name is required.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="cust-phone" class="form-label fw-semibold">Phone Number</label>
+                <input type="tel" class="form-control" id="cust-phone" required placeholder="+91 98765 43210">
+                <div class="invalid-feedback">Phone number is required.</div>
+              </div>
+              <div class="col-12">
+                <label for="cust-email" class="form-label fw-semibold">Email Address (for order updates)</label>
+                <input type="email" class="form-control" id="cust-email" required placeholder="name@example.com">
+                <div class="invalid-feedback">Valid email is required.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Saved Address Selector (if logged in) -->
+          <div class="custom-card p-4 mb-4 d-none" id="saved-address-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="bi bi-bookmark-heart text-danger me-2"></i>Saved Addresses</h5>
+              <a href="profile.html" class="text-danger small text-decoration-none">+ Manage</a>
+            </div>
+            <div id="saved-addresses-options" class="d-flex flex-column gap-2"></div>
+          </div>
+
+          <!-- Delivery Address -->
+          <div class="custom-card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt text-danger me-2"></i>2. Delivery Address</h5>
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="del-street" class="form-label fw-semibold">Street Address / House No.</label>
+                <input type="text" class="form-control" id="del-street" required placeholder="Flat 402, Sunshine Residency, Sector 15">
+                <div class="invalid-feedback">Street address is required.</div>
+              </div>
+              <div class="col-md-5">
+                <label for="del-city" class="form-label fw-semibold">City</label>
+                <input type="text" class="form-control" id="del-city" required placeholder="New Delhi">
+                <div class="invalid-feedback">City is required.</div>
+              </div>
+              <div class="col-md-4">
+                <label for="del-state" class="form-label fw-semibold">State</label>
+                <input type="text" class="form-control" id="del-state" required placeholder="Delhi">
+                <div class="invalid-feedback">State is required.</div>
+              </div>
+              <div class="col-md-3">
+                <label for="del-pincode" class="form-label fw-semibold">Pincode</label>
+                <input type="text" class="form-control" id="del-pincode" required placeholder="110001">
+                <div class="invalid-feedback">Pincode is required.</div>
+              </div>
+              <div class="col-12">
+                <label for="order-instructions" class="form-label fw-semibold">Cooking / Delivery Instructions (Optional)</label>
+                <textarea class="form-control" id="order-instructions" rows="2" placeholder="e.g. Please avoid plastic cutlery, ring the bell twice..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method -->
+          <div class="custom-card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-credit-card text-danger me-2"></i>3. Select Payment Method</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="card p-3 border-2 cursor-pointer h-100 payment-card" for="pay-cod">
+                  <div class="d-flex align-items-center">
+                    <input class="form-check-input me-3" type="radio" name="paymentMethod" id="pay-cod" value="COD" checked>
+                    <div>
+                      <h6 class="fw-bold mb-1">Cash on Delivery</h6>
+                      <p class="text-muted small mb-0">Pay with cash or UPI upon delivery</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+              <div class="col-md-6">
+                <label class="card p-3 border-2 cursor-pointer h-100 payment-card" for="pay-online">
+                  <div class="d-flex align-items-center">
+                    <input class="form-check-input me-3" type="radio" name="paymentMethod" id="pay-online" value="Online">
+                    <div>
+                      <h6 class="fw-bold mb-1">Online Payment</h6>
+                      <p class="text-muted small mb-0">Cards, UPI, Netbanking (Razorpay)</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div id="online-pay-hint" class="alert alert-info mt-3 d-none small">
+              <i class="bi bi-info-circle me-1"></i> You will be directed to Razorpay's secure test gateway to complete the payment.
+            </div>
+          </div>
+
+          <!-- Place Order Button -->
+          <button type="submit" class="btn btn-danger btn-lg w-100 rounded-pill py-3 fw-bold" id="place-order-btn">
+            Place Order • ₹<span id="btn-total-amount">0</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Order Summary Column -->
+      <div class="col-lg-5">
+        <div class="custom-card p-4 sticky-top" style="top: 100px;">
+          <h5 class="fw-bold mb-3"><i class="bi bi-receipt text-danger me-2"></i>Order Summary</h5>
+
+          <div id="checkout-cart-items" class="mb-3 overflow-auto" style="max-height: 320px;">
+            <!-- Cart items loaded via JS -->
+            <div class="text-center py-4 text-muted">Loading cart items...</div>
+          </div>
+
+          <hr class="my-3 text-muted">
+
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Item Subtotal</span>
+            <span class="fw-semibold">₹<span id="summary-subtotal">0</span></span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Delivery Charges</span>
+            <span id="summary-delivery-charge" class="fw-semibold">₹40</span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-3">
+            <span class="text-muted">Restaurant GST (5%)</span>
+            <span class="fw-semibold">₹<span id="summary-tax">0</span></span>
+          </div>
+
+          <hr class="my-3 text-muted">
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0">Grand Total</h5>
+            <h4 class="fw-bold text-danger mb-0">₹<span id="summary-total">0</span></h4>
+          </div>
+
+          <div class="bg-light p-3 rounded-3 text-muted small">
+            <i class="bi bi-shield-check text-success me-2 fs-5 align-middle"></i>
+            100% Safe and Secure Food Delivery guarantee by Prime Platter.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 start-0 p-3" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/navbar.js"></script>
+  <script>
+    let currentCart = null;
+    let paymentConfig = { isConfigured: false, keyId: null };
+
+    function showNotification(msg, type = "danger") {
+      const tc = document.getElementById("toast-container");
+      const id = "toast-" + Date.now();
+      const bg = type === "success" ? "bg-success" : "bg-danger";
+      const html = `
+        <div id="${id}" class="toast align-items-center text-white ${bg} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-info-circle me-2"></i> ${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>`;
+      tc.insertAdjacentHTML("beforeend", html);
+      const el = document.getElementById(id);
+      const t = new bootstrap.Toast(el, { delay: 4000 });
+      t.show();
+      el.addEventListener("hidden.bs.toast", () => el.remove());
+    }
+
+    // Toggle payment radio hint
+    document.querySelectorAll("input[name='paymentMethod']").forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        const hint = document.getElementById("online-pay-hint");
+        if (e.target.value === "Online") {
+          hint.classList.remove("d-none");
+        } else {
+          hint.classList.add("d-none");
+        }
+      });
+    });
+
+    // Initialize Checkout
+    async function initCheckout() {
+      try {
+        // Fetch cart and payment config in parallel
+        const [cart, payConf] = await Promise.all([
+          api.getCart(),
+          api.getPaymentConfig().catch(() => ({ isConfigured: false }))
+        ]);
+
+        currentCart = cart;
+        paymentConfig = payConf;
+
+        if (!cart.items || cart.items.length === 0) {
+          alert("Your cart is empty! Redirecting to menu...");
+          window.location.href = "index.html#menu";
+          return;
+        }
+
+        renderCartSummary(cart);
+        setupCustomerAndAddresses();
+      } catch (err) {
+        showNotification("Failed to load checkout details");
+      }
+    }
+
+    // Populate user profile info and saved addresses if logged in
+    async function setupCustomerAndAddresses() {
+      if (api.isAuthenticated()) {
+        try {
+          const user = await api.getProfile();
+          document.getElementById("cust-name").value = user.name || "";
+          document.getElementById("cust-email").value = user.email || "";
+          document.getElementById("cust-phone").value = user.phone || "";
+
+          if (user.addresses && user.addresses.length > 0) {
+            const section = document.getElementById("saved-address-section");
+            const container = document.getElementById("saved-addresses-options");
+            section.classList.remove("d-none");
+            container.innerHTML = "";
+
+            user.addresses.forEach((addr, idx) => {
+              const checked = addr.isDefault || idx === 0 ? "checked" : "";
+              const addrEl = `
+                <div class="form-check border rounded-3 p-3 mb-2">
+                  <input class="form-check-input saved-addr-radio" type="radio" name="savedAddressChoice" id="addr-choice-${addr._id}" ${checked}
+                    data-street="${addr.street}" data-city="${addr.city}" data-state="${addr.state}" data-pincode="${addr.pincode}">
+                  <label class="form-check-label w-100" for="addr-choice-${addr._id}">
+                    <span class="fw-semibold">${addr.street}</span>
+                    <p class="text-muted small mb-0">${addr.city}, ${addr.state} - ${addr.pincode}</p>
+                  </label>
+                </div>`;
+              container.insertAdjacentHTML("beforeend", addrEl);
+            });
+
+            // Auto-fill form from selected saved address
+            const checkedAddr = user.addresses.find((a) => a.isDefault) || user.addresses[0];
+            fillAddressFields(checkedAddr);
+
+            document.querySelectorAll(".saved-addr-radio").forEach((r) => {
+              r.addEventListener("change", (e) => {
+                const target = e.target;
+                fillAddressFields({
+                  street: target.dataset.street,
+                  city: target.dataset.city,
+                  state: target.dataset.state,
+                  pincode: target.dataset.pincode
+                });
+              });
+            });
+          }
+        } catch (e) {
+          // Fallback to manual entry
+        }
+      }
+    }
+
+    function fillAddressFields(addr) {
+      if (!addr) return;
+      document.getElementById("del-street").value = addr.street || "";
+      document.getElementById("del-city").value = addr.city || "";
+      document.getElementById("del-state").value = addr.state || "";
+      document.getElementById("del-pincode").value = addr.pincode || "";
+    }
+
+    function renderCartSummary(cart) {
+      const itemsContainer = document.getElementById("checkout-cart-items");
+      itemsContainer.innerHTML = "";
+
+      cart.items.forEach((item) => {
+        const row = `
+          <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-danger rounded-pill me-2">${item.quantity}x</span>
+              <div>
+                <p class="mb-0 fw-semibold text-truncate" style="max-width: 180px;">${item.name}</p>
+                <small class="text-muted">₹${item.price} each</small>
+              </div>
+            </div>
+            <span class="fw-bold">₹${item.price * item.quantity}</span>
+          </div>`;
+        itemsContainer.insertAdjacentHTML("beforeend", row);
+      });
+
+      const subtotal = cart.subtotal || cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const deliveryFee = cart.deliveryFee !== undefined ? cart.deliveryFee : (subtotal >= 299 ? 0 : 40);
+      const tax = cart.tax !== undefined ? cart.tax : Math.round(subtotal * 0.05);
+      const total = cart.totalAmount || (subtotal + deliveryFee + tax);
+
+      document.getElementById("summary-subtotal").textContent = subtotal;
+      document.getElementById("summary-delivery-charge").innerHTML =
+        deliveryFee === 0 ? '<span class="badge bg-success">FREE</span>' : `₹${deliveryFee}`;
+      document.getElementById("summary-tax").textContent = tax;
+      document.getElementById("summary-total").textContent = total;
+      document.getElementById("btn-total-amount").textContent = total;
+    }
+
+    // Checkout Form Submit
+    document.getElementById("checkout-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = document.getElementById("checkout-form");
+
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        showNotification("Please fill in all required delivery and contact fields.");
+        return;
+      }
+
+      const name = document.getElementById("cust-name").value.trim();
+      const phone = document.getElementById("cust-phone").value.trim();
+      const email = document.getElementById("cust-email").value.trim();
+
+      const street = document.getElementById("del-street").value.trim();
+      const city = document.getElementById("del-city").value.trim();
+      const state = document.getElementById("del-state").value.trim();
+      const pincode = document.getElementById("del-pincode").value.trim();
+      const specialInstructions = document.getElementById("order-instructions").value.trim();
+
+      const paymentMethod = document.querySelector("input[name='paymentMethod']:checked").value;
+      const btn = document.getElementById("place-order-btn");
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing Order...';
+
+        const orderPayload = {
+          customer: { name, phone, email },
+          deliveryAddress: { street, city, state, pincode },
+          specialInstructions,
+          paymentMethod
+        };
+
+        const res = await api.createOrder(orderPayload);
+        const order = res.order;
+
+        if (paymentMethod === "COD") {
+          window.location.href = `order-confirmation.html?id=${order.orderId}`;
+          return;
+        }
+
+        // Online Payment Flow (Razorpay)
+        if (paymentMethod === "Online") {
+          const rzpOrderRes = await api.createRazorpayOrder(order.orderId);
+
+          if (!rzpOrderRes.configured || !window.Razorpay) {
+            // Test Mode Fallback / Demonstration
+            alert("Online Payment in Test Mode: Simulating successful gateway callback. Razorpay test keys can be configured in backend/.env.");
+            window.location.href = `order-confirmation.html?id=${order.orderId}`;
+            return;
+          }
+
+          const options = {
+            key: rzpOrderRes.keyId,
+            amount: rzpOrderRes.amount,
+            currency: rzpOrderRes.currency,
+            name: "Prime Platter",
+            description: `Order #${order.orderId}`,
+            image: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
+            order_id: rzpOrderRes.razorpayOrderId,
+            handler: async function (response) {
+              try {
+                await api.verifyPayment({
+                  orderId: order.orderId,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature
+                });
+                window.location.href = `order-confirmation.html?id=${order.orderId}`;
+              } catch (err) {
+                showNotification("Payment verification failed: " + err.message);
+                btn.disabled = false;
+                btn.innerHTML = "Retry Payment";
+              }
+            },
+            prefill: {
+              name: order.customer.name,
+              email: order.customer.email,
+              contact: order.customer.phone
+            },
+            theme: {
+              color: "#ff4757"
+            }
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.on("payment.failed", function (response) {
+            showNotification("Payment failed: " + response.error.description);
+            btn.disabled = false;
+            btn.innerHTML = "Retry Payment";
+          });
+          rzp.open();
+        }
+      } catch (err) {
+        showNotification(err.message || "Failed to place order. Please try again.");
+        btn.disabled = false;
+        btn.innerHTML = `Place Order • ₹<span id="btn-total-amount">${currentCart?.totalAmount || 0}</span>`;
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", initCheckout);
+  </script>
+</body>
+</html>

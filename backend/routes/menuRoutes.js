@@ -7,16 +7,15 @@ const {
   updateMenuItem,
   deleteMenuItem
 } = require("../controllers/menuController");
+const { protect, restaurantOnly, adminOnly } = require("../middleware/authMiddleware");
 
-router
-  .route("/")
-  .get(getMenuItems)
-  .post(createMenuItem);
+// Public routes
+router.get("/", getMenuItems);
+router.get("/:id", getMenuItemById);
 
-router
-  .route("/:id")
-  .get(getMenuItemById)
-  .put(updateMenuItem)
-  .delete(deleteMenuItem);
+// Protected routes
+router.post("/", protect, restaurantOnly, createMenuItem);
+router.put("/:id", protect, restaurantOnly, updateMenuItem);
+router.delete("/:id", protect, restaurantOnly, deleteMenuItem);
 
 module.exports = router;

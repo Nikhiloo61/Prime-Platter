@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Order - Prime Platter</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top py-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        Prime Platter
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#restaurants">Restaurants</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#menu">Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="my-orders.html">My Orders</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3" id="auth-nav-container">
+          <button class="btn btn-outline-danger rounded-pill" id="btn-login">Login</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Tracking Content -->
+  <main class="container my-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+        <!-- Tracking Header Card -->
+        <div class="custom-card p-4 mb-4">
+          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div>
+              <span class="text-muted small">Tracking Order</span>
+              <h3 class="fw-bold text-danger mb-0" id="track-order-id">Loading...</h3>
+            </div>
+            <div class="d-flex gap-2 mt-2 mt-sm-0">
+              <button class="btn btn-outline-secondary rounded-pill btn-sm" onclick="fetchTrackingData()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+              </button>
+              <button class="btn btn-outline-danger rounded-pill btn-sm d-none" id="cancel-order-btn" onclick="promptCancelOrder()">
+                <i class="bi bi-x-circle me-1"></i> Cancel Order
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Stepper -->
+          <div class="py-3" id="stepper-wrapper">
+            <div class="tracking-stepper">
+              <div class="stepper-line">
+                <div class="stepper-line-fill" id="stepper-line-progress" style="width: 0%;"></div>
+              </div>
+
+              <!-- Step 1: Placed -->
+              <div class="stepper-step" id="step-placed">
+                <div class="stepper-icon"><i class="bi bi-clipboard-check"></i></div>
+                <div class="stepper-label">Placed</div>
+              </div>
+
+              <!-- Step 2: Confirmed -->
+              <div class="stepper-step" id="step-confirmed">
+                <div class="stepper-icon"><i class="bi bi-check2-circle"></i></div>
+                <div class="stepper-label">Confirmed</div>
+              </div>
+
+              <!-- Step 3: Preparing -->
+              <div class="stepper-step" id="step-preparing">
+                <div class="stepper-icon"><i class="bi bi-fire"></i></div>
+                <div class="stepper-label">Preparing</div>
+              </div>
+
+              <!-- Step 4: Out for Delivery -->
+              <div class="stepper-step" id="step-out">
+                <div class="stepper-icon"><i class="bi bi-bicycle"></i></div>
+                <div class="stepper-label">Out for Delivery</div>
+              </div>
+
+              <!-- Step 5: Delivered -->
+              <div class="stepper-step" id="step-delivered">
+                <div class="stepper-icon"><i class="bi bi-bag-check-fill"></i></div>
+                <div class="stepper-label">Delivered</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cancelled Notice (if applicable) -->
+          <div id="cancelled-banner" class="alert alert-danger d-none my-3">
+            <h5 class="fw-bold mb-1"><i class="bi bi-x-octagon-fill me-2"></i>Order Cancelled</h5>
+            <p class="mb-0 small" id="cancelled-reason">This order has been cancelled.</p>
+          </div>
+
+          <div class="bg-light p-3 rounded-4 mt-3 d-flex flex-wrap justify-content-between align-items-center">
+            <div>
+              <span class="text-muted small d-block">Estimated Arrival</span>
+              <h5 class="fw-bold text-success mb-0" id="track-eta">30-40 mins</h5>
+            </div>
+            <div>
+              <span class="text-muted small d-block">Current Status</span>
+              <span class="badge bg-danger rounded-pill px-3 py-2 fs-6" id="track-status-badge">Order Placed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity Timeline & Details -->
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="custom-card p-4 h-100">
+              <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-danger me-2"></i>Status History</h5>
+              <div id="status-history-timeline" class="timeline">
+                <!-- Loaded via JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="custom-card p-4 h-100">
+              <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Delivery Destination</h5>
+              <p class="fw-semibold mb-1" id="track-cust-name">-</p>
+              <p class="text-muted small mb-2" id="track-address">-</p>
+              <p class="text-muted small mb-3"><i class="bi bi-telephone text-danger me-1"></i><span id="track-cust-phone">-</span></p>
+
+              <hr class="text-muted my-3">
+
+              <h6 class="fw-bold mb-2">Order Summary (<span id="track-item-count">0</span> items)</h6>
+              <div id="track-items-summary" class="mb-3 small">
+                <!-- Loaded via JS -->
+              </div>
+              <div class="d-flex justify-content-between fw-bold pt-2 border-top">
+                <span>Total Paid / Payable:</span>
+                <span class="text-danger">₹<span id="track-total">0</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 start-0 p-3" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/navbar.js"></script>
+  <script>
+    let currentOrder = null;
+
+    function showToast(msg, type = "success") {
+      const tc = document.getElementById("toast-container");
+      const id = "toast-" + Date.now();
+      const bg = type === "success" ? "bg-success" : "bg-danger";
+      const html = `
+        <div id="${id}" class="toast align-items-center text-white ${bg} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>`;
+      tc.insertAdjacentHTML("beforeend", html);
+      const el = document.getElementById(id);
+      const t = new bootstrap.Toast(el, { delay: 3500 });
+      t.show();
+      el.addEventListener("hidden.bs.toast", () => el.remove());
+    }
+
+    async function fetchTrackingData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get("id");
+
+      if (!orderId) {
+        window.location.href = "my-orders.html";
+        return;
+      }
+
+      try {
+        const res = await api.getOrderById(orderId);
+        currentOrder = res.order;
+        renderTracking(currentOrder);
+      } catch (err) {
+        showToast("Failed to load tracking data: " + err.message, "danger");
+      }
+    }
+
+    function renderTracking(order) {
+      document.getElementById("track-order-id").textContent = order.orderId;
+      document.getElementById("track-eta").textContent = order.estimatedDeliveryTime || "30-40 mins";
+      document.getElementById("track-status-badge").textContent = order.orderStatus;
+
+      // Delivery info
+      document.getElementById("track-cust-name").textContent = order.customer.name;
+      document.getElementById("track-cust-phone").textContent = order.customer.phone;
+      document.getElementById("track-address").textContent =
+        `${order.deliveryAddress.street}, ${order.deliveryAddress.city}, ${order.deliveryAddress.state} - ${order.deliveryAddress.pincode}`;
+      document.getElementById("track-total").textContent = order.pricing.total;
+      document.getElementById("track-item-count").textContent = order.items.length;
+
+      // Cancel button visibility
+      const cancelBtn = document.getElementById("cancel-order-btn");
+      if (["Order Placed", "Confirmed"].includes(order.orderStatus)) {
+        cancelBtn.classList.remove("d-none");
+      } else {
+        cancelBtn.classList.add("d-none");
+      }
+
+      // Check if Cancelled
+      const banner = document.getElementById("cancelled-banner");
+      const stepper = document.getElementById("stepper-wrapper");
+
+      if (order.orderStatus === "Cancelled") {
+        banner.classList.remove("d-none");
+        stepper.classList.add("d-none");
+        document.getElementById("track-status-badge").className = "badge bg-secondary rounded-pill px-3 py-2 fs-6";
+      } else {
+        banner.classList.add("d-none");
+        stepper.classList.remove("d-none");
+        updateStepper(order.orderStatus);
+      }
+
+      // Render items summary
+      const itemsContainer = document.getElementById("track-items-summary");
+      itemsContainer.innerHTML = "";
+      order.items.forEach((item) => {
+        itemsContainer.insertAdjacentHTML(
+          "beforeend",
+          `<div class="d-flex justify-content-between mb-1">
+            <span>${item.quantity}x ${item.name}</span>
+            <span class="text-muted">₹${item.price * item.quantity}</span>
+          </div>`
+        );
+      });
+
+      // Render timeline
+      const timelineContainer = document.getElementById("status-history-timeline");
+      timelineContainer.innerHTML = "";
+
+      const history = order.statusHistory || [];
+      if (history.length === 0) {
+        timelineContainer.innerHTML = '<p class="text-muted small">No history updates yet.</p>';
+        return;
+      }
+
+      history.slice().reverse().forEach((h) => {
+        const time = new Date(h.timestamp).toLocaleTimeString("en-IN", {
+          hour: "2-digit",
+          minute: "2-digit",
+          day: "numeric",
+          month: "short"
+        });
+        const entry = `
+          <div class="border-start border-danger border-2 ps-3 pb-3 position-relative ms-2">
+            <span class="position-absolute top-0 start-0 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+            <h6 class="fw-bold mb-0 text-dark">${h.status}</h6>
+            <small class="text-muted d-block mb-1">${time}</small>
+            <p class="text-muted small mb-0">${h.note || ""}</p>
+          </div>`;
+        timelineContainer.insertAdjacentHTML("beforeend", entry);
+      });
+    }
+
+    function updateStepper(status) {
+      const steps = ["Order Placed", "Confirmed", "Preparing", "Out for Delivery", "Delivered"];
+      const stepIds = ["step-placed", "step-confirmed", "step-preparing", "step-out", "step-delivered"];
+      const currentIndex = steps.indexOf(status);
+
+      stepIds.forEach((id, index) => {
+        const el = document.getElementById(id);
+        el.classList.remove("active", "completed");
+        if (index < currentIndex) {
+          el.classList.add("completed");
+        } else if (index === currentIndex) {
+          el.classList.add("active");
+        }
+      });
+
+      const fillPercent = currentIndex > 0 ? (currentIndex / (steps.length - 1)) * 100 : 0;
+      document.getElementById("stepper-line-progress").style.width = `${fillPercent}%`;
+    }
+
+    async function promptCancelOrder() {
+      if (!currentOrder) return;
+      const reason = prompt("Please provide a reason for cancellation:", "Change of plans");
+      if (reason === null) return;
+
+      try {
+        await api.cancelOrder(currentOrder.orderId, reason);
+        showToast("Order cancelled successfully");
+        fetchTrackingData();
+      } catch (err) {
+        showToast(err.message || "Failed to cancel order", "danger");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchTrackingData);
+  </script>
+</body>
+</html>

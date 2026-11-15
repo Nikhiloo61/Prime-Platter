@@ -27,6 +27,11 @@ const orderItemSchema = new mongoose.Schema(
     restaurantId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Restaurant"
+    },
+    customization: {
+      size: String,
+      addons: [String],
+      instructions: String
     }
   },
   { _id: false }
@@ -61,58 +66,73 @@ const orderSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null
+      default: null,
+      index: true
+    },
+    restaurantId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      default: null,
+      index: true
+    },
+    deliveryPartnerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true
     },
     customer: {
       name: {
         type: String,
-        required: [true, "Customer name is required"],
+        required: true,
         trim: true
       },
       email: {
         type: String,
-        required: [true, "Customer email is required"],
+        required: true,
         trim: true,
         lowercase: true
       },
       phone: {
         type: String,
-        required: [true, "Customer phone number is required"],
+        required: true,
         trim: true
       }
     },
     deliveryAddress: {
       street: {
         type: String,
-        required: [true, "Street address is required"],
+        required: true,
         trim: true
       },
       city: {
         type: String,
-        required: [true, "City is required"],
+        required: true,
         trim: true
       },
       state: {
         type: String,
-        required: [true, "State is required"],
+        required: true,
         trim: true
       },
       pincode: {
         type: String,
-        required: [true, "Pincode is required"],
+        required: true,
         trim: true
+      },
+      coordinates: {
+        latitude: { type: Number, default: 28.6139 },
+        longitude: { type: Number, default: 77.2090 }
       }
     },
-    items: {
-      type: [orderItemSchema],
-      validate: [
-        (val) => val.length > 0,
-        "Order must contain at least one item"
-      ]
-    },
+    items: [orderItemSchema],
     specialInstructions: {
       type: String,
-      trim: true,
+      default: "",
+      trim: true
+    },
+    couponCode: {
+      type: String,
       default: ""
     },
     pricing: {
@@ -133,6 +153,11 @@ const orderSchema = new mongoose.Schema(
         default: 0,
         min: 0
       },
+      discount: {
+        type: Number,
+        default: 0,
+        min: 0
+      },
       total: {
         type: Number,
         required: true,
@@ -147,7 +172,7 @@ const orderSchema = new mongoose.Schema(
       },
       status: {
         type: String,
-        enum: ["Pending", "Paid", "Failed"],
+        enum: ["Pending", "Paid", "Failed", "Refunded"],
         default: "Pending"
       },
       transactionId: {
@@ -173,7 +198,8 @@ const orderSchema = new mongoose.Schema(
         "Delivered",
         "Cancelled"
       ],
-      default: "Order Placed"
+      default: "Order Placed",
+      index: true
     },
     statusHistory: [statusHistorySchema],
     estimatedDeliveryTime: {
@@ -185,5 +211,7 @@ const orderSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+orderSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model("Order", orderSchema);
