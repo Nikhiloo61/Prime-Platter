@@ -28,6 +28,11 @@ const cartItemSchema = new mongoose.Schema(
     restaurantId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Restaurant"
+    },
+    customization: {
+      size: String,
+      addons: [String],
+      instructions: String
     }
   },
   { _id: false }
@@ -47,6 +52,15 @@ const cartSchema = new mongoose.Schema(
       index: true
     },
     items: [cartItemSchema],
+    couponCode: {
+      type: String,
+      default: ""
+    },
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
     subtotal: {
       type: Number,
       default: 0,
@@ -73,7 +87,7 @@ const cartSchema = new mongoose.Schema(
   }
 );
 
-// Method to recalculate subtotal, delivery fee, taxes, and totalAmount
+// Method to recalculate subtotal, delivery fee, taxes, discount, and totalAmount
 cartSchema.methods.calculateTotal = function () {
   this.subtotal = this.items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -81,9 +95,11 @@ cartSchema.methods.calculateTotal = function () {
   );
   // Free delivery on orders above ₹299, otherwise standard ₹40
   this.deliveryFee = this.subtotal === 0 ? 0 : this.subtotal >= 299 ? 0 : 40;
-  // 5% standard restaurant tax
+  // 5% standard restaurant tax / GST
   this.tax = this.subtotal === 0 ? 0 : Math.round(this.subtotal * 0.05);
-  this.totalAmount = this.subtotal + this.deliveryFee + this.tax;
+
+  const rawTotal = this.subtotal + this.deliveryFee + this.tax;
+  this.totalAmount = Math.max(0, rawTotal - (this.discount || 0));
   return this.totalAmount;
 };
 

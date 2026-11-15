@@ -26,6 +26,10 @@ const restaurantSchema = new mongoose.Schema(
       trim: true,
       default: "Connaught Place, New Delhi"
     },
+    coordinates: {
+      latitude: { type: Number, default: 28.6315 },
+      longitude: { type: Number, default: 77.2167 }
+    },
     rating: {
       type: Number,
       default: 4.0,
@@ -44,11 +48,23 @@ const restaurantSchema = new mongoose.Schema(
     isOpen: {
       type: Boolean,
       default: true
+    },
+    openingHours: {
+      type: String,
+      default: "10:00 AM - 11:00 PM"
+    },
+    ownerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
     }
   },
   {
     timestamps: true
   }
 );
+
+restaurantSchema.index({ name: "text", cuisine: "text", location: "text" });
+restaurantSchema.index({ rating: -1 });
 
 module.exports = mongoose.model("Restaurant", restaurantSchema);

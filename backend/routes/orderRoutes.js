@@ -1,20 +1,21 @@
-
 const express = require("express");
 const router = express.Router();
 
 const {
-    createOrder,
-    getOrderById,
-    getMyOrders,
-    cancelOrder,
-    reorder,
-    getAllOrdersAdmin,
-    updateOrderStatusAdmin
+  createOrder,
+  getOrderById,
+  getMyOrders,
+  cancelOrder,
+  reorder,
+  getAllOrdersAdmin,
+  updateOrderStatusAdmin,
+  getRestaurantOrders,
+  getDeliveryOrders
 } = require("../controllers/orderController");
 
 const {
-    protect,
-    adminOnly
+  protect,
+  adminOnly
 } = require("../middleware/authMiddleware");
 
 // Customer routes - login required
@@ -24,9 +25,12 @@ router.get("/:id", protect, getOrderById);
 router.put("/:id/cancel", protect, cancelOrder);
 router.post("/:id/reorder", protect, reorder);
 
-// Admin routes - login and admin role required
+// Restaurant & Delivery Partner routes
+router.get("/restaurant/:restaurantId", protect, getRestaurantOrders);
+router.get("/delivery/assigned", protect, getDeliveryOrders);
+
+// Admin / Staff routes
 router.get("/admin/all", protect, adminOnly, getAllOrdersAdmin);
-router.put("/admin/:id/status", protect, adminOnly, updateOrderStatusAdmin);
+router.put("/admin/:id/status", protect, updateOrderStatusAdmin);
 
 module.exports = router;
-

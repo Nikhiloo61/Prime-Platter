@@ -1,12 +1,13 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const getJwtSecret = () => {
+  return process.env.JWT_SECRET || "prime_platter_jwt_secret_key_prod_default";
+};
 
-if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET is not configured");
-}
+const getJwtExpiresIn = () => {
+  return process.env.JWT_EXPIRES_IN || "7d";
+};
 
 // Helper to generate JWT token
 const generateToken = (user) => {
@@ -16,9 +17,9 @@ const generateToken = (user) => {
       email: user.email,
       role: user.role
     },
-    JWT_SECRET,
+    getJwtSecret(),
     {
-      expiresIn: JWT_EXPIRES_IN
+      expiresIn: getJwtExpiresIn()
     }
   );
 };
@@ -31,6 +32,8 @@ const formatUserResponse = (user) => {
     email: user.email,
     phone: user.phone,
     role: user.role,
+    avatar: user.avatar || "",
+    isAvailable: user.isAvailable,
     addresses: user.addresses || [],
     createdAt: user.createdAt
   };
@@ -41,7 +44,7 @@ const formatUserResponse = (user) => {
 // @access  Public
 const register = async (req, res, next) => {
   try {
-    const { name, email, phone, password, confirmPassword } = req.body;
+    const { name, email, phone, password, confirmPassword, role = "customer", avatar = "" } = req.body;
 
     if (!name || !email || !phone || !password) {
       return res.status(400).json({
@@ -64,6 +67,10 @@ const register = async (req, res, next) => {
       });
     }
 
+    // Role elevation prevention: Admin cannot be registered via public API
+    const allowedRoles = ["customer", "restaurant_owner", "delivery_partner"];
+    const assignedRole = allowedRoles.includes(role) ? role : "customer";
+
     // Check if user already exists
     const normalizedEmail = email.toLowerCase().trim();
     const existingUser = await User.findOne({ email: normalizedEmail });
@@ -81,7 +88,8 @@ const register = async (req, res, next) => {
       email: normalizedEmail,
       phone: phone.trim(),
       password,
-      role: "customer"
+      role: assignedRole,
+      avatar
     });
 
     const token = generateToken(user);
@@ -164,12 +172,12 @@ const getMe = async (req, res, next) => {
   }
 };
 
-// @desc    Update user profile (name, phone)
+// @desc    Update user profile (name, phone, avatar)
 // @route   PUT /api/auth/profile
 // @access  Private
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, avatar, isAvailable } = req.body;
     const user = await User.findById(req.user._id);
 
     if (!user) {
@@ -179,8 +187,13 @@ const updateProfile = async (req, res, next) => {
       });
     }
 
+    // Role cannot be modified by user
     if (name) user.name = name.trim();
     if (phone) user.phone = phone.trim();
+    if (avatar !== undefined) user.avatar = avatar;
+    if (isAvailable !== undefined && user.role === "delivery_partner") {
+      user.isAvailable = Boolean(isAvailable);
+    }
 
     await user.save();
 
@@ -204,14 +217,14 @@ const changePassword = async (req, res, next) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
         success: false,
-        message: "Please provide current password and new password"
+        message: "Please enter your current password and new password"
       });
     }
 
-    if (confirmPassword && newPassword !== confirmPassword) {
+    if (newPassword !== confirmPassword) {
       return res.status(400).json({
         success: false,
-        message: "New password and confirmation do not match"
+        message: "New password and Confirm Password do not match"
       });
     }
 
@@ -223,18 +236,12 @@ const changePassword = async (req, res, next) => {
     }
 
     const user = await User.findById(req.user._id).select("+password");
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
 
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: "Incorrect current password"
+        message: "Current password is incorrect"
       });
     }
 
@@ -250,7 +257,7 @@ const changePassword = async (req, res, next) => {
   }
 };
 
-// @desc    Add saved delivery address
+// @desc    Add delivery address
 // @route   POST /api/auth/address
 // @access  Private
 const addAddress = async (req, res, next) => {
@@ -260,21 +267,16 @@ const addAddress = async (req, res, next) => {
     if (!street || !city || !state || !pincode) {
       return res.status(400).json({
         success: false,
-        message: "Street, city, state, and pincode are required"
+        message: "Please provide street, city, state, and pincode"
       });
     }
 
     const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
 
-    const setAsDefault = Boolean(isDefault) || user.addresses.length === 0;
+    // If setting as default or if first address, set isDefault = true
+    const shouldBeDefault = isDefault || user.addresses.length === 0;
 
-    if (setAsDefault) {
+    if (shouldBeDefault) {
       user.addresses.forEach((addr) => {
         addr.isDefault = false;
       });
@@ -287,14 +289,14 @@ const addAddress = async (req, res, next) => {
       city: city.trim(),
       state: state.trim(),
       pincode: pincode.trim(),
-      isDefault: setAsDefault
+      isDefault: shouldBeDefault
     });
 
     await user.save();
 
     res.status(201).json({
       success: true,
-      message: "Delivery address added successfully",
+      message: "Address added successfully",
       addresses: user.addresses
     });
   } catch (error) {
@@ -302,35 +304,25 @@ const addAddress = async (req, res, next) => {
   }
 };
 
-// @desc    Delete saved delivery address
+// @desc    Delete delivery address
 // @route   DELETE /api/auth/address/:addressId
 // @access  Private
 const deleteAddress = async (req, res, next) => {
   try {
-    const { addressId } = req.params;
     const user = await User.findById(req.user._id);
+    const address = user.addresses.id(req.params.addressId);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-
-    const initialCount = user.addresses.length;
-    user.addresses = user.addresses.filter(
-      (addr) => addr._id.toString() !== addressId
-    );
-
-    if (user.addresses.length === initialCount) {
+    if (!address) {
       return res.status(404).json({
         success: false,
         message: "Address not found"
       });
     }
 
-    // If default address was deleted, make the first one default
-    if (user.addresses.length > 0 && !user.addresses.some((a) => a.isDefault)) {
+    const wasDefault = address.isDefault;
+    user.addresses.pull({ _id: req.params.addressId });
+
+    if (wasDefault && user.addresses.length > 0) {
       user.addresses[0].isDefault = true;
     }
 
@@ -338,7 +330,7 @@ const deleteAddress = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Address deleted successfully",
+      message: "Address removed successfully",
       addresses: user.addresses
     });
   } catch (error) {
@@ -351,32 +343,19 @@ const deleteAddress = async (req, res, next) => {
 // @access  Private
 const setDefaultAddress = async (req, res, next) => {
   try {
-    const { addressId } = req.params;
     const user = await User.findById(req.user._id);
+    const targetAddress = user.addresses.id(req.params.addressId);
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-
-    let found = false;
-    user.addresses.forEach((addr) => {
-      if (addr._id.toString() === addressId) {
-        addr.isDefault = true;
-        found = true;
-      } else {
-        addr.isDefault = false;
-      }
-    });
-
-    if (!found) {
+    if (!targetAddress) {
       return res.status(404).json({
         success: false,
         message: "Address not found"
       });
     }
+
+    user.addresses.forEach((addr) => {
+      addr.isDefault = addr._id.toString() === req.params.addressId;
+    });
 
     await user.save();
 

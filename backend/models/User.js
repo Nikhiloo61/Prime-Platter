@@ -72,8 +72,25 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["customer", "admin"],
+      enum: ["customer", "restaurant_owner", "delivery_partner", "admin"],
       default: "customer"
+    },
+    avatar: {
+      type: String,
+      default: ""
+    },
+    // Delivery partner specific fields
+    isAvailable: {
+      type: Boolean,
+      default: true
+    },
+    vehicleType: {
+      type: String,
+      default: "Motorcycle"
+    },
+    currentLocation: {
+      latitude: { type: Number, default: 28.6139 },
+      longitude: { type: Number, default: 77.2090 }
     },
     addresses: [addressSchema]
   },
@@ -81,6 +98,9 @@ const userSchema = new mongoose.Schema(
     timestamps: true
   }
 );
+
+// MongoDB Index for role queries
+userSchema.index({ role: 1 });
 
 // Hash password before saving if modified
 userSchema.pre("save", async function (next) {

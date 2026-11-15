@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Prime Platter</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top py-3">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center" href="index.html">
+        Prime Platter
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#restaurants">Restaurants</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#menu">Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html#offers">Offers</a></li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-3">
+          <a href="login.html" class="btn btn-outline-danger rounded-pill">
+            Sign In
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Auth Card Section -->
+  <main class="auth-wrapper py-5">
+    <div class="auth-card p-4 p-md-5">
+      <div class="text-center mb-4">
+        <div class="d-inline-flex p-3 rounded-circle bg-danger bg-opacity-10 text-danger mb-3">
+          <i class="bi bi-person-plus-fill fs-2"></i>
+        </div>
+        <h3 class="fw-bold mb-1">Create an Account</h3>
+        <p class="text-muted">Join Prime Platter for exclusive food offers</p>
+      </div>
+
+      <div id="alert-box" class="alert alert-danger d-none" role="alert"></div>
+
+      <form id="register-form" novalidate>
+        <div class="mb-3">
+          <label for="reg-name" class="form-label fw-semibold">Full Name</label>
+          <div class="input-group">
+            <span class="input-group-text bg-transparent text-muted"><i class="bi bi-person"></i></span>
+            <input type="text" class="form-control" id="reg-name" placeholder="John Doe" required>
+          </div>
+          <div class="invalid-feedback">Please enter your full name.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="reg-email" class="form-label fw-semibold">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text bg-transparent text-muted"><i class="bi bi-envelope"></i></span>
+            <input type="email" class="form-control" id="reg-email" placeholder="name@example.com" required autocomplete="email">
+          </div>
+          <div class="invalid-feedback">Please enter a valid email address.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="reg-phone" class="form-label fw-semibold">Phone Number</label>
+          <div class="input-group">
+            <span class="input-group-text bg-transparent text-muted"><i class="bi bi-telephone"></i></span>
+            <input type="tel" class="form-control" id="reg-phone" placeholder="+91 98765 43210" required>
+          </div>
+          <div class="invalid-feedback">Please enter your phone number.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="reg-password" class="form-label fw-semibold">Password</label>
+          <div class="password-wrapper">
+            <input type="password" class="form-control pe-5" id="reg-password" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+            <button type="button" class="password-toggle-btn" id="toggle-password" aria-label="Toggle password visibility">
+              <i class="bi bi-eye" id="toggle-password-icon"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback">Password must be at least 6 characters long.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="reg-confirm-password" class="form-label fw-semibold">Confirm Password</label>
+          <div class="password-wrapper">
+            <input type="password" class="form-control pe-5" id="reg-confirm-password" placeholder="Re-type password" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="invalid-feedback" id="confirm-feedback">Passwords must match.</div>
+        </div>
+
+        <button type="submit" class="btn btn-danger w-100 rounded-pill py-2 fw-semibold" id="submit-btn">
+          Create Account
+        </button>
+      </form>
+
+      <div class="text-center mt-4 pt-3 border-top">
+        <p class="text-muted small mb-0">
+          Already have an account? <a href="login.html" class="text-danger fw-semibold text-decoration-none">Sign In</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    // Password toggle
+    const toggleBtn = document.getElementById("toggle-password");
+    const passwordInput = document.getElementById("reg-password");
+    const toggleIcon = document.getElementById("toggle-password-icon");
+
+    toggleBtn.addEventListener("click", () => {
+      const isPassword = passwordInput.getAttribute("type") === "password";
+      passwordInput.setAttribute("type", isPassword ? "text" : "password");
+      toggleIcon.className = isPassword ? "bi bi-eye-slash" : "bi bi-eye";
+    });
+
+    const form = document.getElementById("register-form");
+    const alertBox = document.getElementById("alert-box");
+    const submitBtn = document.getElementById("submit-btn");
+    const confirmInput = document.getElementById("reg-confirm-password");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      alertBox.classList.add("d-none");
+
+      const password = passwordInput.value;
+      const confirmPassword = confirmInput.value;
+
+      if (password !== confirmPassword) {
+        confirmInput.setCustomValidity("Passwords do not match");
+      } else {
+        confirmInput.setCustomValidity("");
+      }
+
+      if (!form.checkValidity()) {
+        form.classList.add("was-validated");
+        return;
+      }
+
+      const name = document.getElementById("reg-name").value.trim();
+      const email = document.getElementById("reg-email").value.trim();
+      const phone = document.getElementById("reg-phone").value.trim();
+
+      try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Creating account...';
+
+        await api.register({
+          name,
+          email,
+          phone,
+          password,
+          confirmPassword
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get("redirect") || "index.html";
+        window.location.href = redirectUrl;
+      } catch (err) {
+        alertBox.textContent = err.message || "Failed to register. Please try again.";
+        alertBox.classList.remove("d-none");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = "Create Account";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const MenuItem = require("../models/MenuItem");
+const Restaurant = require("../models/Restaurant");
 const Cart = require("../models/Cart");
 const { getActiveCartForRequest } = require("./cartController");
 
@@ -12,14 +13,15 @@ const generateOrderId = () => {
 
 // @desc    Create a new food delivery order
 // @route   POST /api/orders
-// @access  Public / Optional Auth
+// @access  Public / Optional Auth / Protected
 const createOrder = async (req, res, next) => {
   try {
     const {
       customer,
       deliveryAddress,
       specialInstructions = "",
-      paymentMethod = "COD"
+      paymentMethod = "COD",
+      couponCode = ""
     } = req.body;
 
     // Validate customer contact
@@ -68,6 +70,7 @@ const createOrder = async (req, res, next) => {
     const verifiedOrderItems = [];
     let subtotal = 0;
     let estimatedTime = "30-40 mins";
+    let restaurantRefId = null;
 
     for (const item of cart.items) {
       const liveItem = menuMap.get(item.menuItemId.toString());
@@ -89,8 +92,11 @@ const createOrder = async (req, res, next) => {
       const itemTotal = liveItem.price * item.quantity;
       subtotal += itemTotal;
 
-      if (liveItem.restaurantId && liveItem.restaurantId.deliveryTime) {
-        estimatedTime = liveItem.restaurantId.deliveryTime;
+      if (liveItem.restaurantId) {
+        restaurantRefId = liveItem.restaurantId?._id || liveItem.restaurantId;
+        if (liveItem.restaurantId.deliveryTime) {
+          estimatedTime = liveItem.restaurantId.deliveryTime;
+        }
       }
 
       verifiedOrderItems.push({
@@ -99,21 +105,34 @@ const createOrder = async (req, res, next) => {
         price: liveItem.price,
         quantity: item.quantity,
         image: liveItem.image,
-        restaurantId: liveItem.restaurantId?._id || liveItem.restaurantId
+        restaurantId: restaurantRefId,
+        customization: item.customization || null
       });
     }
 
     // Server-side calculation of delivery charges and taxes
     const deliveryFee = subtotal >= 299 ? 0 : 40;
     const tax = Math.round(subtotal * 0.05); // 5% GST
-    const total = subtotal + deliveryFee + tax;
+    let discount = 0;
 
+    // Apply verified promo discounts server-side
+    const cleanCoupon = (couponCode || cart.couponCode || "").toUpperCase().trim();
+    if (cleanCoupon === "WELCOME50" || cleanCoupon === "PRIME50") {
+      discount = Math.min(Math.round(subtotal * 0.5), 100);
+    } else if (cleanCoupon === "TASTY20" || cleanCoupon === "SWIGGYIT") {
+      discount = Math.min(Math.round(subtotal * 0.2), 75);
+    } else if (cleanCoupon === "FREEDEL") {
+      discount = deliveryFee;
+    }
+
+    const total = Math.max(0, subtotal + deliveryFee + tax - discount);
     const orderId = generateOrderId();
     const isOnline = paymentMethod.toUpperCase() === "ONLINE";
 
     const order = await Order.create({
       orderId,
       userId: req.user ? req.user._id : null,
+      restaurantId: restaurantRefId,
       customer: {
         name: custName.trim(),
         email: custEmail.trim().toLowerCase(),
@@ -123,14 +142,17 @@ const createOrder = async (req, res, next) => {
         street: deliveryAddress.street.trim(),
         city: deliveryAddress.city.trim(),
         state: deliveryAddress.state.trim(),
-        pincode: deliveryAddress.pincode.trim()
+        pincode: deliveryAddress.pincode.trim(),
+        coordinates: deliveryAddress.coordinates || { latitude: 28.6139, longitude: 77.2090 }
       },
       items: verifiedOrderItems,
       specialInstructions: (specialInstructions || "").trim(),
+      couponCode: cleanCoupon,
       pricing: {
         subtotal,
         deliveryFee,
         tax,
+        discount,
         total
       },
       paymentInfo: {
@@ -153,11 +175,20 @@ const createOrder = async (req, res, next) => {
 
     // Clear cart upon successful order creation
     cart.items = [];
+    cart.couponCode = "";
+    cart.discount = 0;
     cart.subtotal = 0;
     cart.deliveryFee = 0;
     cart.tax = 0;
     cart.totalAmount = 0;
     await cart.save();
+
+    // Trigger real-time socket notification if io is available on app
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`order:${order.orderId}`).emit("order:status_updated", order);
+      io.emit("restaurant:new_order", order);
+    }
 
     res.status(201).json({
       success: true,
@@ -171,16 +202,15 @@ const createOrder = async (req, res, next) => {
 
 // @desc    Get order by ID or orderId
 // @route   GET /api/orders/:id
-// @access  Public / Protected
+// @access  Protected
 const getOrderById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Search by custom orderId (e.g. PP-20261031-ABCD) or MongoDB ObjectId
     const isObjectId = id.match(/^[0-9a-fA-F]{24}$/);
     const query = isObjectId ? { $or: [{ _id: id }, { orderId: id }] } : { orderId: id };
 
-    const order = await Order.findOne(query);
+    const order = await Order.findOne(query).populate("restaurantId");
 
     if (!order) {
       return res.status(404).json({
@@ -189,19 +219,18 @@ const getOrderById = async (req, res, next) => {
       });
     }
 
-// Only the order owner or an admin can view the order
-    const isOwner =
-        order.userId &&
-        order.userId.toString() === req.user._id.toString();
+    // Role-based authorization
+    const isOwner = req.user && order.userId && order.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user && req.user.role === "admin";
+    const isRider = req.user && req.user.role === "delivery_partner";
+    const isRestOwner = req.user && req.user.role === "restaurant_owner";
 
-    const isAdmin = req.user.role === "admin";
-
-    if (!isOwner && !isAdmin) {
-        return res.status(403).json({
-            success: false,
-            message: "You are not authorized to view this order"
-        });
-}
+    if (!isOwner && !isAdmin && !isRider && !isRestOwner) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to view this order"
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -217,9 +246,9 @@ const getOrderById = async (req, res, next) => {
 // @access  Private
 const getMyOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({ userId: req.user._id }).sort({
-      createdAt: -1
-    });
+    const orders = await Order.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate("restaurantId", "name cuisine image");
 
     res.status(200).json({
       success: true,
@@ -233,7 +262,7 @@ const getMyOrders = async (req, res, next) => {
 
 // @desc    Cancel an order
 // @route   PUT /api/orders/:id/cancel
-// @access  Public / Private
+// @access  Private
 const cancelOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -251,23 +280,26 @@ const cancelOrder = async (req, res, next) => {
       });
     }
 
-  // Only the order owner or an admin can cancel the order
-    const isOwner =
-        order.userId &&
-        order.userId.toString() === req.user._id.toString();
-
-    const isAdmin = req.user.role === "admin";
+    // Authorization check
+    const isOwner = req.user && order.userId && order.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user && req.user.role === "admin";
 
     if (!isOwner && !isAdmin) {
-        return res.status(403).json({
-            success: false,
-            message: "Not authorized to cancel this order"
-        });
+      return res.status(403).json({
+        success: false,
+        message: "You are not authorized to cancel this order"
+      });
     }
 
-    // Check cancellation eligibility
-    const cancellableStatuses = ["Order Placed", "Confirmed"];
-    if (!cancellableStatuses.includes(order.orderStatus)) {
+    // Allowed status transitions
+    const nonCancellableStatuses = [
+      "Preparing",
+      "Out for Delivery",
+      "Delivered",
+      "Cancelled"
+    ];
+
+    if (nonCancellableStatuses.includes(order.orderStatus)) {
       return res.status(400).json({
         success: false,
         message: `Order cannot be cancelled because it is already "${order.orderStatus}"`
@@ -283,6 +315,12 @@ const cancelOrder = async (req, res, next) => {
 
     await order.save();
 
+    // Notify rooms via socket
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`order:${order.orderId}`).emit("order:status_updated", order);
+    }
+
     res.status(200).json({
       success: true,
       message: "Order cancelled successfully",
@@ -295,7 +333,7 @@ const cancelOrder = async (req, res, next) => {
 
 // @desc    Reorder items from a previous order into the active cart
 // @route   POST /api/orders/:id/reorder
-// @access  Public / Optional Auth
+// @access  Protected / Optional
 const reorder = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -374,7 +412,8 @@ const getAllOrdersAdmin = async (req, res, next) => {
 
     const orders = await Order.find(filter)
       .sort({ createdAt: -1 })
-      .populate("userId", "name email phone");
+      .populate("userId", "name email phone")
+      .populate("restaurantId", "name cuisine");
 
     res.status(200).json({
       success: true,
@@ -386,9 +425,9 @@ const getAllOrdersAdmin = async (req, res, next) => {
   }
 };
 
-// @desc    Update order status (Admin only)
+// @desc    Update order status (Admin / Restaurant / Rider)
 // @route   PUT /api/orders/admin/:id/status
-// @access  Private / Admin
+// @access  Private / Admin / Rider / Restaurant
 const updateOrderStatusAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -426,22 +465,64 @@ const updateOrderStatusAdmin = async (req, res, next) => {
     order.statusHistory.push({
       status,
       timestamp: new Date(),
-      note: note || `Order marked as ${status} by admin`
+      note: note || `Order marked as ${status}`
     });
 
     if (paymentStatus) {
       order.paymentInfo.status = paymentStatus;
     } else if (status === "Delivered" && order.paymentInfo.method === "COD") {
-      // If COD order is delivered, automatically mark as Paid
       order.paymentInfo.status = "Paid";
     }
 
     await order.save();
 
+    // Emit live status update to Socket.IO room
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`order:${order.orderId}`).emit("order:status_updated", order);
+    }
+
     res.status(200).json({
       success: true,
       message: `Order status updated to "${status}"`,
       order
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get orders for specific restaurant (Restaurant Owner)
+// @route   GET /api/orders/restaurant/:restaurantId
+// @access  Private
+const getRestaurantOrders = async (req, res, next) => {
+  try {
+    const { restaurantId } = req.params;
+    const orders = await Order.find({ restaurantId }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get assigned orders for delivery partner
+// @route   GET /api/orders/delivery/assigned
+// @access  Private
+const getDeliveryOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find({
+      orderStatus: { $in: ["Confirmed", "Preparing", "Out for Delivery", "Delivered"] }
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders
     });
   } catch (error) {
     next(error);
@@ -455,5 +536,7 @@ module.exports = {
   cancelOrder,
   reorder,
   getAllOrdersAdmin,
-  updateOrderStatusAdmin
+  updateOrderStatusAdmin,
+  getRestaurantOrders,
+  getDeliveryOrders
 };
